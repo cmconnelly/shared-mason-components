@@ -117,7 +117,7 @@ result         = <% $result |h %><br />
 <%init>
 
 ### Output debugging information?
-my $debug = 2;
+my $debug = 0;
 
 our ($webhostname, $pageuri, $siteroot);
 
