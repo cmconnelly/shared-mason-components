@@ -94,26 +94,14 @@ Userland Frontier.
 %# if ( $link{Text} =~ m/not defined/ ) {
 %#  <% $glossentry %><br />
 %# }
-% if ( $debug == 1 ) {
+% if ( $debug >= 1 ) {
 <br />
 <code>
-hostname       = <% $hostname %><br />
-requri         = <% $requri %><br />
-pagepath       = <% $pagepath %><br />
+hostname       = <% $webhostname %><br />
 siteroot       = <% $siteroot %><br />
 pageuri        = <% $pageuri %><br />
 %my $dirpath    = $m->request_comp->dir_path;
 dirpath        = <% $dirpath %><br />
-<br />
-dirs           =
-% foreach my $DDir ( @dirs ) {
-    <% $DDir %><br />
-% }
-<br />
-glossaries     =
-% foreach my $gloss ( @glossaries ) {
-    <% $gloss %><br />
-% }
 <br />
 workinglink    = <% $workinglink %><br />
 linkuri        = <% $linkuri %><br />
@@ -129,28 +117,9 @@ result         = <% $result |h %><br />
 <%init>
 
 ### Output debugging information?
-my $debug = 0;
+my $debug = 2;
 
-### Figure out the hostname.
-my $s = Apache->server;
-my $hostname = $s->server_hostname;
-
-### Get the URI of this page from Apache.
-my $requri = $r->uri;
-
-### And Mason's conception of the path.
-my $pagepath = $m->request_comp->path;
-$pagepath =~ s|^/||;
-
-### So our site's root is...
-my $siteroot = "http://$hostname$requri";
-$siteroot =~ s#\Q$pagepath\E##;
-
-
-
-### Create an absolute URI object for this page.
-my $pageuri = URI->new_abs($pagepath, $siteroot);
-
+our ($webhostname, $pageuri, $siteroot);
 
 ### Now, based on the arguments that we were provided, we can define
 ### $glossentry and $linktext.
@@ -164,69 +133,79 @@ if ( defined $linktext ) {
 
 ### By default, we'll define the values for the Text and URL keys.
 my %link = (Text => 'ERROR',
-	    URL => '',
-	   );
+            URL => '',
+           );
 
 ### Now load the glossary file(s).
 
+our $times;
+print "<br />Run number ", ++$times, "<br />\n" if $debug >= 1;
+
+our %glossary;
+
 my $glossname = "glossary";
+my $dirpath   = $m->request_comp->dir_path;
+our $requesttime;
+our $lastdirpath;
+our $lastrequesttime;
+
+print "Last request at $lastrequesttime <br />\n" if (defined $lastrequesttime and $debug >= 1);
+print "This request at $requesttime <br />\n" if $debug >= 1;
+
+if (!defined $lastdirpath
+    or $lastdirpath ne $dirpath
+    or $lastrequesttime + 5 < $requesttime) {
+    $lastdirpath = $dirpath;
+    $lastrequesttime = $requesttime;
+    print "\n<br />Loading glossary for $dirpath\n<br />\n" if $debug >= 1;
+
+print "REQ: ", $m->request_comp->dir_path, "\n<br />" if $debug;
 
 my @dirs = split ('/', $m->request_comp->dir_path );
+push @dirs, '' unless @dirs;
 my @glossaries;
 
-print "\@dirs = @dirs\n<br />" if ( $debug == 1 );
+print "\@dirs = (", join(", ", @dirs), ")\n<br />" if ( $debug >= 1 );
 
 while (@dirs) {
     my $path = join('/', @dirs );
-    print "path = $path<br />\n" if ( $debug == 2 );
-    print "<br/> checking $path<br />\n" if ( $debug == 2 );
-    my $glosstest = "/$path/$glossname";
+    my $glosstest = "$path/$glossname";
+    print "\n<br/> checking '$glosstest'" if ( $debug >= 2 );
     if ( $m->comp_exists($glosstest) ) {
-	$glosstest =~ s#//#/#;
-	push ( @glossaries, $glosstest );
+        print " -- found!" if ( $debug >= 2 );
+        push ( @glossaries, $glosstest );
     }
     pop @dirs;
 }
 
-
-my $glossariesfound = scalar(@glossaries);
-
-print "glossariesfound = $glossariesfound<br />\n" if ( $debug == 2 );
-
-if ( $glossariesfound == 0 ) {
-   print "@glossaries must be empty...<br />\n" if ( $debug == 1 );
-   my $glosstest = "/" . $glossname;
-   if ( $m->comp_exists($glosstest) ) {
-      print "$glosstest exists...<br />\n" if ( $debug == 1 );
-      push @glossaries, $glosstest;
-
-  }
-}
-
-print "\@glossaries = @glossaries<br />\n" if ( $debug == 1 );
+print "\n<br />\n\@glossaries = (", join(", ", @glossaries), ")<br />\n" if ( $debug >= 1 );
 
 my @glossary;
 
 while ( @glossaries ) {
     my $glossfile = pop @glossaries;
-    print "<br />loading $glossfile<br />\n" if ( $debug == 1 );
+    print "<br />loading $glossfile<br />\n" if ( $debug >= 1 );
     my $data = $m->scomp($glossfile);
     next if ( $data =~ m/^\s*\z/ );
     my @glossdata = eval ( $data );
     if ($@) {
-	print "Perl Error parsing glossary $glossfile: $@" if ( $debug == 1 );
-	next;
+        print "Perl Error parsing glossary $glossfile: $@" if ( $debug >= 1 );
+        next;
     }
     if ( scalar(@glossdata) % 2 != 0 ) {
-	if ( $debug == 1 ) {
-	    print "Grumble grumble, you can't even format $glossfile right!\n";
-	    print "Discarding ", (pop @glossdata), "...\n";
-	}
+        if ( $debug >= 1 ) {
+            print "Grumble grumble, you can't even format $glossfile right!\n";
+            print "Discarding ", (pop @glossdata), "...\n";
+        }
     }
     push @glossary, @glossdata;
 }
 
-my %glossary = @glossary;
+%glossary = @glossary;
+
+} else {
+    print "\n<br />Reusing loaded gloassary for $dirpath\n<br />\n" if $debug >= 1;
+}
 
 
 ### Now that we have the full glossary loaded, pull out the entry for
@@ -245,27 +224,27 @@ if ( defined $glossary_entry ) {
       $result='<a href="';
       $workinglink = $link{URL};
       if ( $workinglink =~ m#^/# ) {
-  	# This is a local (intersite) link, so we want it relative
-	$workinglink =~ s|^/||;
-	my $fullink = $siteroot . $workinglink;
-	$linkuri = URI->new_abs($fullink, $siteroot);
-	$linkrel = $linkuri->rel($pageuri);
-	$link{URL} = $linkrel;
+        # This is a local (intersite) link, so we want it relative
+        $workinglink =~ s|^/||;
+        my $fullink = $siteroot . $workinglink;
+        $linkuri = URI->new_abs($fullink, $siteroot);
+        $linkrel = $linkuri->rel($pageuri);
+        $link{URL} = $linkrel;
       }
       $result .= $link{URL};
       $result .= '">';
     }
     if ( $linktext ne "" ) {
-	$link{Text} = $linktext;
+        $link{Text} = $linktext;
     }
     if ( ( $link{Explanation} ) and ( $expflag ) ) {
-	$link{Text} = '<abbr title="' . $link{Explanation} . '">' . $link{Text} . '</abbr>';
+        $link{Text} = '<abbr title="' . $link{Explanation} . '">' . $link{Text} . '</abbr>';
     }
     $result .= $link{Text};
       if ( $link{URL} ne "" ) {
     $result .= '</a>';
     }
-} else {			# Glossary entry doesn't exist
+} else {                        # Glossary entry doesn't exist
     #    print "Nope, not defined\n";
     $result = '<span class="error">Glossary entry ';
     $result .= $glossentry;
