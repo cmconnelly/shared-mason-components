@@ -31,13 +31,13 @@ the site.
 </%doc>
 
 <link rel="stylesheet" type="text/css" media="screen" href="<% $cssuri %>" />
+<link rel="stylesheet" type="text/css" media="print" href="<% $printuri %>" />
 %# print $m->request_comp->method_exists('localstyle'), "\n";
 % if ( $m->request_comp->method_exists('localstyle') ) {
-% print '<style type="text/css" media="screen">\n';
+<style type="text/css" media="screen">
 % print $m->request_comp->call_method('localstyle');
-% print "</style>\n";
+</style>
 % }
-<link rel="stylesheet" type="text/css" media="print" href="<% $printuri %>" />
 % if ( $debug ) {
 %# Debugging code:
 % print "<!--\n";

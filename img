@@ -133,101 +133,76 @@ and my modifications to it and to the glossSub command.
 </a>\
 % }
 % if ( $debug ) {
-<p>
-siteroot = <% $siteroot %><br>
-imageroot = <% $imageroot %><br>
-pagepath = <% $pagepath %><br>
-pageuri = <% $pageuri %><br>
-imagepath = <% $imagepath %><br>
-imageuri = <% $imageuri %><br>
-image{Filename} = <% $image{Filename} %><br>
-image{Width} = <% $image{Width} %><br>
-image{Height} = <% $image{Height} %><br>
-image{Alt} = <% $image{Alt} %><br>
-image{Text} = <% $image{Text} %><br>
-image{TmpAlt} = <% $image{TmpAlt} %><br>
+<p><code>
+siteroot = <% $siteroot %><br />
+imageroot = <% $imageroot %><br />
+pageuri = <% $pageuri %><br />
+imagepath = <% $imagepath %><br />
+imagelinkbase = <% $imagelinkbase %><br />
+image{Filename} = <% $image{Filename} %><br />
+image{Width} = <% $image{Width} %><br />
+image{Height} = <% $image{Height} %><br />
+image{Alt} = <% $image{Alt} %><br />
+image{Text} = <% $image{Text} %><br />
+image{TmpAlt} = <% $image{TmpAlt} %><br />
  
 % foreach my $foo (sort keys (%image)) {
-<% $foo %>=><% $image{$foo} %><br>
+<% $foo %>=><% $image{$foo} %><br />
 % }
-</p>
+</code></p>
 % } # End of debug if
 <%init>
 ### Output debugging information?
 my $debug = 0;
 
-### Figure out the hostname.
-my $s = Apache->server;
-my $hostname = $s->server_hostname;
+our ($webhostname, $pageuri, $siteroot, $imageroot, $imagedir, $imagelinkbase);
 
-### Get the URI of this page from Apache.
-my $requri = $r->uri;
-
-### And Mason's conception of the path.
-my $pagepath = $m->request_comp->path;
-$pagepath =~ s|^/||;
-
-### So our site's root is...
-my $siteroot = "http://$hostname$requri";
-$siteroot =~ s#\Q$pagepath\E##;
-
-### Create an absolute URI object for this page.
-my $pageuri = URI->new_abs($pagepath, $siteroot);
-
-my $imageroot = $siteroot . 'images/';
 my $imagepath;
-my $imageuri;
 my %image = (
 	     Filename => "/dev/null",
 #	     Alt      => "[mystery image]",
 	     Border   => 0,
 	    );
 
-my %imagedb = eval ( $m->file('image.db') );
+my %imagedb = eval ( $m->scomp('image.db') );
 
 my @arguments = @_;
+
 # The first argument is the name of the image
 my $imagename = shift @arguments;
+
 # Any other arguments should be parameters -- we'll merge them into
 # our %image hash.
-#if ( defined $image{Alt} ) {
-#   # put supplied Alt tag into a temporary location
-#   $image{TmpAlt} = $image{Alt};
-#}
 my $imagedb_entry = $imagedb{$imagename};
 if ( defined $imagedb_entry ) {
   %image = (%image, %$imagedb_entry, @arguments);
   my $imagefile = $image{Filename};
-  $imageuri = URI->new_abs($imagefile, $imageroot);
-  $image{Filename} = $imageuri->rel($pageuri);
-#  $image{Filename} = $imageroot . $imagefile;
+  $image{Filename} = $imagelinkbase . $imagefile;
+
 # We need the $imagepath on the local file system to be able to get
 # the dimensions of the image
-  $imagepath = "/home/mason/computing/images/" . $imagefile;
+  $imagepath = "$imagedir/images/" . $imagefile;
   my ( $width, $height ) = ( Image::Size::imgsize($imagepath) );
   $image{Width} = $width unless defined $image{Width};
   $image{Height} = $height unless defined $image{Height};
-#
-  if ( defined $image{Gloss}) {
-    # If we have a Gloss parameter, we should look to see if there's a
-    # glossary entry
-    my $glossentry = $image{Gloss};
-    my %glossary = eval ( $m->file('glossary') );
-    my $glossary_entry = $glossary{$glossentry};
 
-    if ( defined $glossary_entry ) {
-      %image = ( %image, %$glossary_entry );
-      if ( ! defined $image{Alt} ) {
-	$image{Alt} = $image{Text};
-      }
-    }
+ if ( defined $image{Gloss}) {
+   # If we have a Gloss parameter, we should look to see if there's a
+   # glossary entry
+   my $glossentry = $image{Gloss};
+   my %glossary = eval ( $m->file('glossary') );
+   my $glossary_entry = $glossary{$glossentry};
+
+   if ( defined $glossary_entry ) {
+     %image = ( %image, %$glossary_entry );
+     if ( ! defined $image{Alt} ) {
+       $image{Alt} = $image{Text};
+     }
   }
+}
 
-#  print "<p><strong>Alt = $image{Alt}</strong></p>\n";
   if ( ( ! defined $image{Alt} ) || ( $image{Alt} eq "" ) ) {
-#    print "<p>Alt not defined</p>\n";
     $image{Alt} = "[mystery image]";
-#  print "<p><strong>Alt = $image{Alt}</strong></p>\n";
     } 
 
 if ( ! defined $image{Title} ) {
@@ -239,9 +214,7 @@ if ( ! defined $image{Title} ) {
   } elsif ( ( defined $image{URL} ) && ( $image{URL} !~ m/^http:/ ) ) {
     $image{URL} = $image{URL};
     my $linkuri = URI->new_abs($image{URL}, $siteroot);
-#    print "<p>linkuri = $linkuri</p>\n";
     $image{URL} = $linkuri->rel($pageuri);
-#    print "<p>image{URL} = $image{URL}</p>\n";
   }
 } else {
   print "<p class=\"error\">No such image, $imagename.</p>\n";

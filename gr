@@ -128,7 +128,7 @@ my ($glossentry, $linktext) = @_;
 my $expflag = 1;
 
 if ( defined $linktext ) {
-   $expflag = 0;
+   $expflag = 2;
 }
 
 ### By default, we'll define the values for the Text and URL keys.
@@ -169,6 +169,7 @@ print "\@dirs = (", join(", ", @dirs), ")\n<br />" if ( $debug >= 1 );
 
 while (@dirs) {
     my $path = join('/', @dirs );
+    print "\$path is $path\n" if ( $debug >= 1 );
     my $glosstest = "$path/$glossname";
     print "\n<br/> checking '$glosstest'" if ( $debug >= 2 );
     if ( $m->comp_exists($glosstest) ) {

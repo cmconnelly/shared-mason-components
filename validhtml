@@ -39,6 +39,9 @@ ORURL=>$validatoruri) %>
 %    } elsif ( $dtdver eq "xhtml1.0" or $dtdver eq "xhtml1.0t" ) {
 <% $m->scomp('/img', 'ValidXHTML1.0', Gloss=>"ValidXHTML1.0",
 ORURL=>$validatoruri) %>
+%    } elsif ( $dtdver eq "xhtml1.1" ) {
+<% $m->scomp('/img', 'ValidXHTML1.1', Gloss=>"ValidXHTML1.1",
+ORURL=>$validatoruri) %>
 %    } else {
 <span class="error">Weird DTD: <% $dtdver %>.</span>
 %    }
