@@ -178,8 +178,8 @@ print "\@dirs = @dirs\n<br />" if ( $debug == 1 );
 
 while (@dirs) {
     my $path = join('/', @dirs );
-    print "path = $path<br />\n" if ( $debug == 1 );
-    print "<br/> checking $path<br />\n" if ( $debug == 1 );
+    print "path = $path<br />\n" if ( $debug == 2 );
+    print "<br/> checking $path<br />\n" if ( $debug == 2 );
     my $glosstest = "/$path/$glossname";
     if ( $m->comp_exists($glosstest) ) {
 	$glosstest =~ s#//#/#;
@@ -191,7 +191,7 @@ while (@dirs) {
 
 my $glossariesfound = scalar(@glossaries);
 
-print "glossariesfound = $glossariesfound<br />\n" if ( $debug == 1 );
+print "glossariesfound = $glossariesfound<br />\n" if ( $debug == 2 );
 
 if ( $glossariesfound == 0 ) {
    print "@glossaries must be empty...<br />\n" if ( $debug == 1 );
@@ -245,7 +245,9 @@ if ( defined $glossary_entry ) {
     $workinglink = $link{URL};
     if ( $workinglink =~ m#^/# ) {
 	# This is a local (intersite) link, so we want it relative
-	$linkuri = URI->new_abs($workinglink, $siteroot);
+	$workinglink =~ s|^/||;
+	my $fullink = $siteroot . $workinglink;
+	$linkuri = URI->new_abs($fullink, $siteroot);
 	$linkrel = $linkuri->rel($pageuri);
 	$link{URL} = $linkrel;
     }
