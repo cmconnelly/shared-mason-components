@@ -1,0 +1,117 @@
+<%doc>
+
+DTD HTML::Mason component
+Copyright (C) 2000 - 2003 Claire Connelly
+
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+   USA
+
+Takes a single argument that is a shorthand for the correct DTD to use
+for this document.
+
+Returns the correct DOCTYPE declaration for the head of the document.
+For XML, it also returns the necessary XML declaration.
+
+Use in an autohandler as
+
+   <& /DTD, 'dtd_name' &>
+
+where dtd_name is one of the shorthand names supported by the component:
+
+HTML 3.2 (Deprecated)
+
+3.2 -- HTML 3.2
+   -//W3C//DTD HTML 3.2//EN
+   <http://www.w3.org/TR/REC-html32/>
+
+HTML 4.01
+
+4.01 -- HTML 4.01 Strict
+   -//W3C//DTD HTML 4.01//EN
+   <http://www.w3.org/TR/html4/strict.dtd>
+
+4.01t -- HTML 4.01 Transitional (default)
+   -//W3C//DTD HTML 4.01 Transitional//EN
+   <http://www.w3.org/TR/html4/loose.dtd>
+
+4.01frame -- HTML 4.01 Frameset (but avoid frames!)
+   -//W3C//DTD HTML 4.01 Frameset//EN
+   <http://www.w3.org/TR/html4/frameset.dtd>
+
+XHTML 1.0
+
+xhtml1.0 -- XHTML 1.0 Strict
+   -//W3C//DTD XHTML 1.0 Strict//EN
+   <http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd>
+
+xhtml1.0t -- XHTML 1.0 Transitional
+   -//W3C//DTD XHTML 1.0 Transitional//EN
+   <http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd>
+
+xhtml1.0frame -- XHTML 1.0 Frameset (as above)
+   -//W3C//DTD XHTML 1.0 Frameset//EN
+   <http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd>
+
+XHTML 1.1 DTD
+
+xhtml1.1 -- XHTML 1.1
+   -//W3C//DTD XHTML 1.1//EN
+   <http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd>
+
+Theoretically, you should be able to specify a particular DTD for a
+single page by adding the line
+
+   <%method DTD>dtd_name</%method>
+
+to your document, where dtd_name has been replaced with one of the
+shorthand DTD names.  Your top-level autohandler should use the DTD
+component as
+
+   <& DTD, DTD=>$DTD &>
+
+and define $DTD in its <%init> section.
+
+$Id$
+
+</%doc>
+% if ( $DTD eq "3.2" ) {
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN" "http://www.w3.org/TR/REC-html32/"> 
+% } elsif ( $DTD eq "4.0t" ) {
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+% } elsif ( $DTD eq "4.01" ) {
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+% } elsif ( $DTD eq "4.01t" ) {
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+% } elsif ( $DTD eq "4.01frame" ) {
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd">
+% } elsif ( $DTD eq "xhtml1.0" ) {
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+% } elsif ( $DTD eq "xhtml1.0t" ) {
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+% } elsif ( $DTD eq "xhtml1.0frame" ) {
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
+% } elsif ( $DTD eq "xhtml1.1" ) {
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+% } else { 			# Default to HTML 4.01 Transitional
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+% }
+<%args>
+$DTD
+</%args>

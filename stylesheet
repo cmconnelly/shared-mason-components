@@ -1,0 +1,79 @@
+<%doc>
+
+$Id$
+
+stylesheet HTML::Mason component
+Copyright (C) 2000 - 2003 Claire Connelly
+
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+   USA
+
+This component is called with a single argument, the name of a
+stylesheet to use for the page/template, as in
+
+   <& /stylesheet, 'mystylesheet' &>
+
+Stylesheets are assumed to be stored in the /stylesheets directory for
+the site.
+
+</%doc>
+
+%# <link rel="stylesheet" type="text/css" href="<% $cssuri %>">
+<style type="text/css" media="all">
+@import "<% $cssuri %>";
+</style>
+<link rel="stylesheet" type="text/css" media="print" href="<% $printuri %>" />
+<%init>
+my @args = @_;
+my $stylesheet =  $args[0];
+
+### Output debugging information?
+my $debug = 0;
+
+### Figure out the hostname.
+my $s = Apache->server;
+my $hostname = $s->server_hostname;
+
+### Get the URI of this page from Apache.
+my $requri = $r->uri;
+
+### And Mason's conception of the path.
+my $pagepath = $m->request_comp->path;
+$pagepath =~ s|^/||;
+
+### So our site's root is...
+my $siteroot = "http://$hostname$requri";
+$siteroot =~ s#\Q$pagepath\E##;
+
+### Create an absolute URI object for this page.
+my $pageuri = URI->new_abs($pagepath, $siteroot);
+
+
+my $csspath    =  'stylesheets/' . $stylesheet . '.css';
+my $cssabsuri  =  URI->new_abs($csspath, $siteroot);
+my $cssuri     =  $cssabsuri->rel($pageuri);
+my $printuri   =  $cssuri;
+$printuri      =~ s/$stylesheet/print/;
+## ----------------------------------- 
+## Debugging code:
+#-debug- print "<!--\n";
+#-debug- print "pagepath       = $pagepath\n";
+#-debug- print "pageuri        = $pageuri\n";
+#-debug- print "csspath        = $csspath\n";
+#-debug- print "cssabsuri      = $cssabsuri\n";
+#-debug- print "cssuri         = $cssuri\n";
+#-debug- print "stylesheet     = $stylesheet\n";
+#-debug- print "-->\n";
+</%init>

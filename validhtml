@@ -1,0 +1,83 @@
+<%doc>
+
+$Id$
+
+validhtml HTML::Mason component
+Copyright (C) 2000 - 2003 Claire Connelly
+
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+   USA
+
+This component generates a ``valid {X}HTML'' button that links to the
+World Wide Web Consortium's Validator at validator.w3.org.
+
+</%doc>
+
+% if ( ! defined $dtdver ) {
+<span class="error">No DTD specified.</span>
+% } else {
+%    if ( $dtdver eq "3.2" ) {
+<% $m->scomp('/img', 'ValidHTML3.2', Gloss=>"ValidHTML3.2", ORURL=>$validatoruri) %>
+%    } elsif ( $dtdver eq "401t" ) {
+<% $m->scomp('/img', 'ValidHTML4.01', Gloss=>"ValidHTML4.01",
+ORURL=>$validatoruri) %>
+%    } elsif ( $dtdver eq "40t" ) {
+<% $m->scomp('/img', 'ValidHTML4.0', Gloss=>"ValidHTML4.0",
+ORURL=>$validatoruri) %>
+%    } elsif ( $dtdver eq "xhtml1.0" or $dtdver eq "xhtml1.0t" ) {
+<% $m->scomp('/img', 'ValidXHTML1.0', Gloss=>"ValidXHTML1.0",
+ORURL=>$validatoruri) %>
+%    } else {
+<span class="error">Weird DTD: <% $dtdver %>.</span>
+%    }
+% }
+<%args>
+$dtdver
+</%args>
+<%init>
+### Output debugging information?
+my $debug = 0;
+
+### Figure out the hostname.
+my $s = Apache->server;
+my $hostname = $s->server_hostname;
+
+### Get the URI of this page from Apache.
+my $requri = $r->uri;
+
+### And Mason's conception of the path.
+my $pagepath = $m->request_comp->path;
+$pagepath =~ s|^/||;
+
+### So our site's root is...
+my $siteroot = "http://$hostname$requri";
+$siteroot =~ s#\Q$pagepath\E##;
+
+### Create an absolute URI object for this page.
+my $pageuri = URI->new_abs($pagepath, $siteroot);
+
+my $validatoruri = 'http://validator.w3.org/check?uri=';
+$validatoruri   .= 'http://www.math.hmc.edu/computing/';
+my $valpath     = $pagepath;
+$valpath        =~ s#/hmcmath/##;
+$validatoruri   .= $valpath . ';ss';
+
+$validatoruri = "http://validator.w3.org/check/referer";
+
+#$uri =~ s|/mason|www.eskimo.com/~c|g;
+</%init>
+<%filter>
+s{http://fal/eskimo/}{}ig
+</%filter>

@@ -1,0 +1,103 @@
+<%doc>
+
+$Id$
+
+hmclogo HTML::Mason component
+Copyright (C) 2000 - 2003 Claire Connelly
+
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+   USA
+
+This component provides a site-identifying logo image.  On all pages
+but the root (home page) of the site, the logo will also be a link
+back to the root page.
+
+</%doc>
+%# my $uri = $r->uri;
+%# <p>URI = <% $uri %></p>
+%# $uri =~ s/index\.html$//;
+%# <p>URI = <% $uri %></p>
+%
+% unless ( $home ) {
+% $alttext = "Link to Home";
+<a href="<% $homelink %>">
+% }
+<% $logoimage %> alt="<% $alttext %>" /><br />
+% unless ( $home ) {
+</a>
+% }
+% if ( $debug == 1 ) {
+%# ----- Debugging Information -----
+<pre>
+homeuri = <% $homeuri %>
+homelink = <% $homelink %>
+pagepath = <% $pagepath %>
+pageuri = <% $pageuri %>
+imageroot = <% $imageroot %>
+imageabsuri = <% $imageabsuri %>
+imageuri = <% $imageuri %>
+home = <% $home %>
+siteroot       = <% $siteroot %>
+</pre>
+%# ----- End Debugging Information -----
+% }
+<%init>
+
+# Output debugging information?
+my $debug = 0;
+
+### Figure out the hostname.
+my $s = Apache->server;
+my $hostname = $s->server_hostname;
+
+### Get the URI of this page from Apache.
+my $requri = $r->uri;
+
+### And Mason's conception of the path.
+my $pagepath = $m->request_comp->path;
+$pagepath =~ s|^/||;
+
+### So our site's root is...
+my $siteroot = "http://$hostname$requri";
+$siteroot =~ s#\Q$pagepath\E##;
+
+my $alttext      = "Harvey Mudd College Mathematics Computing";
+my $homeuri      = URI->new_abs('index.html', $siteroot);
+my $pageuri      = URI->new_abs($pagepath, $siteroot);
+my $homelink     = $homeuri->rel($pageuri);
+$homelink        =~ s/index\.html//;
+my $imageroot    = $siteroot . "images/";
+# print "\nimageroot is $imageroot\n\n";
+#my $imageabsuri  = URI->new_abs('hmcmathlogo.png', $imageroot);
+#my $imageabsuri  = URI->new_abs('mathcomputinglog2.png', $imageroot);
+my $imageabsuri  = URI->new_abs('mathatmudd.png', $imageroot);
+my $imageuri     = $imageabsuri->rel($pageuri);
+#my $logoimage = '<img src="' . $imageuri . '" height="90" width="345" border="0" ';
+#my $logoimage = '<img src="' . $imageuri . '" height="107" width="301" border="0" ';
+my $logoimage = '<img src="' . $imageuri . '" height="42" width="72" border="0" ';
+## ^^^ IMG tag is closed when the script completes
+my $home = $pageuri->eq($homeuri);
+# -----------------------------------
+## Debugging information:
+# print "homeuri = $homeuri<br>\n";
+# print "homelink = $homelink<br>\n";
+# print "pagepath = $pagepath<br>\n";
+# print "pageuri = $pageuri<br>\n";
+# print "imageroot = $imageroot<br>\n";
+# print "imageabsuri = $imageabsuri<br>\n";
+# print "imageuri = $imageuri<br>\n";
+# print "home = $home<br>\n";
+# -----------------------------------
+</%init>

@@ -1,0 +1,269 @@
+<%doc>
+
+$Id$
+
+gr HTML::Mason component
+Copyright (C) 2000 - 2003 Claire Connelly
+
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+   USA
+
+This component provides a glossary command for producing links or
+boilerplate text in other components.
+
+It requires the definition of a glossary file containing entries with
+between one and three fields, URL, Explanation, and Text.  If a
+glossary call is made to a nonexistent entry, or if the entry name is
+misspelled in the call, the component generates an error message that
+will appear in its place in the rendered page.
+
+Format of glossary File
+
+The glossary file is read in and evaluated as a Perl hash-of-hashes.
+Each entry key points to a hash containing, at minimum, a Text field.
+Each entry is delimited by commas.  A minimal glossary file might be
+
+   "foo" => {
+      Text => "foo",
+   },
+
+which would produce ``foo'' when called as 
+
+   <& /gr, 'foo' &>
+
+A more complete entry might be 
+
+   "bar" => {
+      Text => 'touch the bar',
+      URL  => 'http://www.bar.foo.baz/',
+   },
+
+which would allow you to produce a link, as in
+
+   I like to <& /gr, 'bar' &>.
+
+which would produce 
+
+   I like to <a href="http://www.bar.foo.baz/">touch the bar</a>.
+
+By adding in an Explanation,
+
+   "CPAN" => {
+      Text        => 'CPAN',
+      URL         => 'http://www.cpan.org/',
+      Explanation => 'Comprehensive Perl Archive Network',
+   },
+
+a call such as
+
+   HTML::Mason is available from <& /gr, 'CPAN' &>.
+
+becomes
+
+   HTML::Mason is available from <a href="http://www.cpan.org/"><abbr
+   title="Comprehensive Perl Archive Network">CPAN</abbr></a>.
+
+where hovering over the link ``CPAN'' will (with browsers that support
+the <abbr> tag) produce a tooltip or speak the expansion of the
+abbreviation.
+
+Any of the arguments in the glossary entry can be overridden in the
+component call, as in
+
+   <& /gr, 'CPAN', Text=>'totally awesome archive', Explanation=>'' &>
+
+
+The gr component is based on the idea of a similar command provided by
+Userland Frontier.
+
+</%doc>
+
+<% $result %>\
+%#<a href="<% $link{URL} %>"><% $link{Text} %></a>\
+%# if ( $link{Text} =~ m/not defined/ ) {
+%#  <% $glossentry %><br />
+%# }
+% if ( $debug == 1 ) {
+<br />
+<code>
+hostname       = <% $hostname %><br />
+requri         = <% $requri %><br />
+pagepath       = <% $pagepath %><br />
+siteroot       = <% $siteroot %><br />
+pageuri        = <% $pageuri %><br />
+%my $dirpath    = $m->request_comp->dir_path;
+dirpath        = <% $dirpath %><br />
+<br />
+dirs           =
+% foreach my $DDir ( @dirs ) {
+    <% $DDir %><br />
+% }
+<br />
+glossaries     =
+% foreach my $gloss ( @glossaries ) {
+    <% $gloss %><br />
+% }
+<br />
+workinglink    = <% $workinglink %><br />
+linkuri        = <% $linkuri %><br />
+linkrel        = <% $linkrel %><br />
+glossary_entry = <% $glossary_entry %><br />
+glossentry     = <% $glossentry %><br />
+linktext       = <% $linktext %><br />
+Text           = <% $link{Text} %><br />
+URL            = <% $link{URL} %><br />
+result         = <% $result |h %><br />
+</code><br />
+% } # <- end of debug if
+<%init>
+
+### Output debugging information?
+my $debug = 0;
+
+### Figure out the hostname.
+my $s = Apache->server;
+my $hostname = $s->server_hostname;
+
+### Get the URI of this page from Apache.
+my $requri = $r->uri;
+
+### And Mason's conception of the path.
+my $pagepath = $m->request_comp->path;
+$pagepath =~ s|^/||;
+
+### So our site's root is...
+my $siteroot = "http://$hostname$requri";
+$siteroot =~ s#\Q$pagepath\E##;
+
+
+
+### Create an absolute URI object for this page.
+my $pageuri = URI->new_abs($pagepath, $siteroot);
+
+
+### Now, based on the arguments that we were provided, we can define
+### $glossentry and $linktext.
+my ($glossentry, $linktext) = @_;
+
+my $expflag = 1;
+
+if ( defined $linktext ) {
+   $expflag = 0;
+}
+
+### By default, we'll define the values for the Text and URL keys.
+my %link = (Text => 'ERROR',
+	    URL => '/dev/null',
+	   );
+
+### Now load the glossary file(s).
+
+my $glossname = "glossary";
+
+my @dirs = split ('/', $m->request_comp->dir_path );
+my @glossaries;
+
+print "\@dirs = @dirs\n<br />" if ( $debug == 1 );
+
+while (@dirs) {
+    my $path = join('/', @dirs );
+    print "path = $path<br />\n" if ( $debug == 1 );
+    print "<br/> checking $path<br />\n" if ( $debug == 1 );
+    my $glosstest = "/$path/$glossname";
+    if ( $m->comp_exists($glosstest) ) {
+	$glosstest =~ s#//#/#;
+	push ( @glossaries, $glosstest );
+    }
+    pop @dirs;
+}
+
+
+my $glossariesfound = scalar(@glossaries);
+
+print "glossariesfound = $glossariesfound<br />\n" if ( $debug == 1 );
+
+if ( $glossariesfound == 0 ) {
+   print "@glossaries must be empty...<br />\n" if ( $debug == 1 );
+   my $glosstest = "/" . $glossname;
+   if ( $m->comp_exists($glosstest) ) {
+      print "$glosstest exists...<br />\n" if ( $debug == 1 );
+      push @glossaries, $glosstest;
+
+  }
+}
+
+print "\@glossaries = @glossaries<br />\n" if ( $debug == 1 );
+
+my @glossary;
+
+while ( @glossaries ) {
+    my $glossfile = pop @glossaries;
+    print "<br />loading $glossfile<br />\n" if ( $debug == 1 );
+    my $data = $m->scomp($glossfile);
+    next if ( $data =~ m/^\s*\z/ );
+    my @glossdata = eval ( $data );
+    if ($@) {
+	print "Perl Error parsing glossary $glossfile: $@" if ( $debug == 1 );
+	next;
+    }
+    if ( scalar(@glossdata) % 2 != 0 ) {
+	if ( $debug == 1 ) {
+	    print "Grumble grumble, you can't even format $glossfile right!\n";
+	    print "Discarding ", (pop @glossdata), "...\n";
+	}
+    }
+    push @glossary, @glossdata;
+}
+
+my %glossary = @glossary;
+
+
+### Now that we have the full glossary loaded, pull out the entry for
+### the glossentry provided in the component call.
+my $glossary_entry = $glossary{$glossentry};
+
+my $linkuri;
+my $linkrel;
+my $workinglink;
+my $result;
+
+
+if ( defined $glossary_entry ) {
+    $result='<a href="';
+    %link = ( %link, %$glossary_entry);
+    $workinglink = $link{URL};
+    if ( $workinglink =~ m#^/# ) {
+	# This is a local (intersite) link, so we want it relative
+	$linkuri = URI->new_abs($workinglink, $siteroot);
+	$linkrel = $linkuri->rel($pageuri);
+	$link{URL} = $linkrel;
+    }
+    $result .= $link{URL};
+    $result .= '">';
+    if ( $linktext ne "" ) {
+	$link{Text} = $linktext;
+    }
+    if ( ( $link{Explanation} ) and ( $expflag ) ) {
+	$link{Text} = '<abbr title="' . $link{Explanation} . '">' . $link{Text} . '</abbr>';
+    }
+    $result .= $link{Text};
+    $result .= '</a>';
+} else {			# Glossary entry doesn't exist
+    #    print "Nope, not defined\n";
+    $result = '<span class="error">Glossary entry ';
+    $result .= $glossentry;
+    $result .= " doesn't exist!</span>";
+}
+</%init>

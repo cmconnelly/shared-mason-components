@@ -1,0 +1,249 @@
+<%doc>
+
+$Id$
+
+img HTML::Mason component
+Copyright (C) 2000 - 2003 Claire Connelly
+
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+   USA
+
+This component generates <img> tags for images that are listed in a
+file called /images.db.  It can also make those images links if the
+necessary information is provided in the site's /glossary file.
+
+In its most basic form, the component is called as
+
+   <& /img, 'imagename' &>
+
+which generates a basic <img> tag.
+
+By providing additional arguments, you can specify attributes for the
+tag or cause the component to generate a link around the <img> tag.
+The supported arguments are
+
+   Align        the align attribute
+   Alt          the alt attribute
+   Border       the border attribute
+   Class        the class attribute
+   Height       the height attribute
+   Hspace       the hspace attribute
+   Longdesc     the longdesc (long description) attribute
+   URL          a URL to use as a link
+   Valign       the valign attribute
+   Vspace       the vspace attribute
+   Width        the width attribute
+
+The alt attribute is required -- calls to the img component without an
+alt attribute will result in an error message appearing in the
+rendered page.  If the image information is being read from the
+images.db file, it should include the information for an alt tag.
+Specifying attributes in the component call overrides any information
+in the database.
+
+Similarly, the URL argument generally comes from the glossary entry
+specified using the Gloss argument, as in
+
+   <& /img, 'image', Gloss=>'glossary' &>
+
+
+
+Format of image.db File
+
+The image.db file is read in and evaluated as a Perl hash-of-hashes.
+It must begin and end with parentheses.  Each entry key points to a
+hash containing, at minimum, the complete filename of the image (not
+including the path, which is assumed to be /images) and an appropriate
+alt text describing the image.  Each entry is delimited by commas.  A
+minimal image.db file might be
+
+   (
+      "foo" => {
+	 Filename => "foo.png",
+	 Alt      => "foos in love",
+      },
+   )
+
+Called with
+
+   <& /img, 'foo' &>
+
+in a top-level page and assuming that the foo.png image was 50 pixels
+by 75 pixels, the component would produce an <img> tag such as
+
+   <img src="images/foo.png" height="50" width="75" alt="foos in love" />
+
+
+The img component was inspired by the img command in Userland Frontier
+and my modifications to it and to the glossSub command.
+
+</%doc>
+
+% if ( defined $image{URL} ) {
+<a href="<% $image{URL} %>">\
+% }
+<img src="<% $image{Filename} %>"\
+% if (defined $image{Class} ) {
+ class="<% $image{Class} %>"\
+% }
+% if ( defined $image{Height} ) {
+ height="<% $image{Height} %>"\
+% }
+% if ( defined $image{Width} ) {
+ width="<% $image{Width} %>"\
+% }
+% if (defined $image{Align} ) {
+ align="<% $image{Align} %>"\
+% }
+% if (defined $image{Valign} ) {
+ valign="<% $image{Valign} %>"\
+% }
+% if (defined $image{Hspace} ) {
+ hspace="<% $image{Hspace} %>"\
+% }
+% if (defined $image{Vspace} ) {
+ vspace="<% $image{Vspace} %>"\
+% }
+% if (defined $image{Border} ) {
+ border="<% $image{Border} %>"\
+% }
+% if (defined $image{Longdesc} ) {
+ longdesc="<% $image{Longdesc} %>"\
+% }
+% if (defined $image{Title} ) {
+ title="<% $image{Title} %>"\
+% }
+%# The alt attribute is required
+ alt="<% $image{Alt} %>"\
+%# Close the img tag (make it XML-compliant)
+ />\
+% if ( defined $image{URL} ) {
+</a>\
+% }
+% if ( $debug ) {
+<p>
+siteroot = <% $siteroot %><br>
+imageroot = <% $imageroot %><br>
+pagepath = <% $pagepath %><br>
+pageuri = <% $pageuri %><br>
+imagepath = <% $imagepath %><br>
+imageuri = <% $imageuri %><br>
+image{Filename} = <% $image{Filename} %><br>
+image{Width} = <% $image{Width} %><br>
+image{Height} = <% $image{Height} %><br>
+image{Alt} = <% $image{Alt} %><br>
+image{Text} = <% $image{Text} %><br>
+image{TmpAlt} = <% $image{TmpAlt} %><br>
+ 
+% foreach my $foo (sort keys (%image)) {
+<% $foo %>=><% $image{$foo} %><br>
+% }
+</p>
+% } # End of debug if
+<%init>
+### Output debugging information?
+my $debug = 0;
+
+### Figure out the hostname.
+my $s = Apache->server;
+my $hostname = $s->server_hostname;
+
+### Get the URI of this page from Apache.
+my $requri = $r->uri;
+
+### And Mason's conception of the path.
+my $pagepath = $m->request_comp->path;
+$pagepath =~ s|^/||;
+
+### So our site's root is...
+my $siteroot = "http://$hostname$requri";
+$siteroot =~ s#\Q$pagepath\E##;
+
+### Create an absolute URI object for this page.
+my $pageuri = URI->new_abs($pagepath, $siteroot);
+
+my $imageroot = $siteroot . 'images/';
+my $imagepath;
+my $imageuri;
+my %image = (
+	     Filename => "/dev/null",
+#	     Alt      => "[mystery image]",
+	     Border   => 0,
+	    );
+
+my %imagedb = eval ( $m->file('image.db') );
+
+my @arguments = @_;
+# The first argument is the name of the image
+my $imagename = shift @arguments;
+# Any other arguments should be parameters -- we'll merge them into
+# our %image hash.
+#if ( defined $image{Alt} ) {
+#   # put supplied Alt tag into a temporary location
+#   $image{TmpAlt} = $image{Alt};
+#}
+my $imagedb_entry = $imagedb{$imagename};
+if ( defined $imagedb_entry ) {
+  %image = (%image, %$imagedb_entry, @arguments);
+  my $imagefile = $image{Filename};
+  $imageuri = URI->new_abs($imagefile, $imageroot);
+  $image{Filename} = $imageuri->rel($pageuri);
+#  $image{Filename} = $imageroot . $imagefile;
+# We need the $imagepath on the local file system to be able to get
+# the dimensions of the image
+  $imagepath = "/home/mason/computing/images/" . $imagefile;
+  my ( $width, $height ) = ( Image::Size::imgsize($imagepath) );
+  $image{Width} = $width unless defined $image{Width};
+  $image{Height} = $height unless defined $image{Height};
+#
+  if ( defined $image{Gloss}) {
+    # If we have a Gloss parameter, we should look to see if there's a
+    # glossary entry
+    my $glossentry = $image{Gloss};
+    my %glossary = eval ( $m->file('glossary') );
+    my $glossary_entry = $glossary{$glossentry};
+
+    if ( defined $glossary_entry ) {
+      %image = ( %image, %$glossary_entry );
+      if ( ! defined $image{Alt} ) {
+	$image{Alt} = $image{Text};
+      }
+    }
+  }
+
+#  print "<p><strong>Alt = $image{Alt}</strong></p>\n";
+  if ( ( ! defined $image{Alt} ) || ( $image{Alt} eq "" ) ) {
+#    print "<p>Alt not defined</p>\n";
+    $image{Alt} = "[mystery image]";
+#  print "<p><strong>Alt = $image{Alt}</strong></p>\n";
+    } 
+
+if ( ! defined $image{Title} ) {
+   $image{Title} = $image{Alt};
+}
+
+  if ( defined $image{ORURL} ) {
+    $image{URL} = $image{ORURL};
+  } elsif ( ( defined $image{URL} ) && ( $image{URL} !~ m/^http:/ ) ) {
+    $image{URL} = $image{URL};
+    my $linkuri = URI->new_abs($image{URL}, $siteroot);
+#    print "<p>linkuri = $linkuri</p>\n";
+    $image{URL} = $linkuri->rel($pageuri);
+#    print "<p>image{URL} = $image{URL}</p>\n";
+  }
+} else {
+  print "<p class=\"error\">No such image, $imagename.</p>\n";
+}
+</%init>
