@@ -164,7 +164,7 @@ if ( defined $linktext ) {
 
 ### By default, we'll define the values for the Text and URL keys.
 my %link = (Text => 'ERROR',
-	    URL => '/dev/null',
+	    URL => '',
 	   );
 
 ### Now load the glossary file(s).
@@ -240,19 +240,21 @@ my $result;
 
 
 if ( defined $glossary_entry ) {
-    $result='<a href="';
     %link = ( %link, %$glossary_entry);
-    $workinglink = $link{URL};
-    if ( $workinglink =~ m#^/# ) {
-	# This is a local (intersite) link, so we want it relative
+    if ( $link{URL} ne "" ) { # There's a URL
+      $result='<a href="';
+      $workinglink = $link{URL};
+      if ( $workinglink =~ m#^/# ) {
+  	# This is a local (intersite) link, so we want it relative
 	$workinglink =~ s|^/||;
 	my $fullink = $siteroot . $workinglink;
 	$linkuri = URI->new_abs($fullink, $siteroot);
 	$linkrel = $linkuri->rel($pageuri);
 	$link{URL} = $linkrel;
+      }
+      $result .= $link{URL};
+      $result .= '">';
     }
-    $result .= $link{URL};
-    $result .= '">';
     if ( $linktext ne "" ) {
 	$link{Text} = $linktext;
     }
@@ -260,7 +262,9 @@ if ( defined $glossary_entry ) {
 	$link{Text} = '<abbr title="' . $link{Explanation} . '">' . $link{Text} . '</abbr>';
     }
     $result .= $link{Text};
+      if ( $link{URL} ne "" ) {
     $result .= '</a>';
+    }
 } else {			# Glossary entry doesn't exist
     #    print "Nope, not defined\n";
     $result = '<span class="error">Glossary entry ';
