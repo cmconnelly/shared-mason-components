@@ -30,14 +30,26 @@ the site.
 
 </%doc>
 
-%# <link rel="stylesheet" type="text/css" href="<% $cssuri %>">
-<style type="text/css" media="all">
-@import "<% $cssuri %>";
-</style>
+<link rel="stylesheet" type="text/css" media="screen" href="<% $cssuri %>" />
 <link rel="stylesheet" type="text/css" media="print" href="<% $printuri %>" />
+% if ( $debug ) {
+%# Debugging code:
+% print "<!--\n";
+% print "hostname       = $hostname\n";
+% print "requri         = $requri\n";
+% print "siteroot       = $siteroot\n";
+% print "pagepath       = $pagepath\n";
+% print "pageuri        = $pageuri\n";
+% print "csspath        = $csspath\n";
+% print "cssabsuri      = $cssabsuri\n";
+% print "cssuri         = $cssuri\n";
+% print "stylesheet     = $stylesheet\n";
+% print "-->\n";
+% }
 <%init>
 my @args = @_;
 my $stylesheet =  $args[0];
+#my $localstyle =  $args[1];
 
 ### Output debugging information?
 my $debug = 0;
@@ -67,14 +79,4 @@ my $cssabsuri  =  URI->new_abs($csspath, $siteroot);
 my $cssuri     =  $cssabsuri;
 my $printuri   =  $cssuri;
 $printuri      =~ s/$stylesheet/print/;
-## ----------------------------------- 
-## Debugging code:
-#-debug- print "<!--\n";
-#-debug- print "pagepath       = $pagepath\n";
-#-debug- print "pageuri        = $pageuri\n";
-#-debug- print "csspath        = $csspath\n";
-#-debug- print "cssabsuri      = $cssabsuri\n";
-#-debug- print "cssuri         = $cssuri\n";
-#-debug- print "stylesheet     = $stylesheet\n";
-#-debug- print "-->\n";
 </%init>
