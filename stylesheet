@@ -33,7 +33,9 @@ the site.
 <link rel="stylesheet" type="text/css" media="screen" href="<% $cssuri %>" />
 %# print $m->request_comp->method_exists('localstyle'), "\n";
 % if ( $m->request_comp->method_exists('localstyle') ) {
+% print '<style type="text/css" media="screen">\n';
 % print $m->request_comp->call_method('localstyle');
+% print "</style>\n";
 % }
 <link rel="stylesheet" type="text/css" media="print" href="<% $printuri %>" />
 % if ( $debug ) {
