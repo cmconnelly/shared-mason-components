@@ -93,6 +93,10 @@
   URL => '/clinic/',
   Text => 'math clinic',
 },
+'clinic' => {
+  URL => '/clinic/',
+  Text => 'Clinic',
+},
 'MATLAB' => {
    URL => 'http://www.mathworks.com/',
    Text => 'MATLAB',
@@ -111,6 +115,21 @@
 },
 "JPEG" => {
    Text => 'JPEG',
-   Explanation => 'Joint Photograpic Experts Group',
+   Explanation => 'Joint Photographic Experts Group',
 },
-                                                                                
+"formatting-information-html" => {
+   URL => 'http://www.tug.org/tex-archive/info/beginlatex/html/',
+   Text => '<cite>Formatting Information</cite> by Peter Flynn',
+},
+"formatting-information-pdf" => {
+   URL => 'http://www.tug.org/tex-archive/info/beginlatex/beginlatex.letter.pdf',
+   Text => '<cite>Formatting Information</cite> by Peter Flynn (PDF)',
+},
+"putnam" => {
+   URL => 'http://www.math.hmc.edu/putnam/',
+   Text => 'William Lowell Putnam Mathematical Competition',
+},
+
+
+
+ 
