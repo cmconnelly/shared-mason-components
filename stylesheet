@@ -31,6 +31,10 @@ the site.
 </%doc>
 
 <link rel="stylesheet" type="text/css" media="screen" href="<% $cssuri %>" />
+%# print $m->request_comp->method_exists('localstyle'), "\n";
+% if ( $m->request_comp->method_exists('localstyle') ) {
+% print $m->request_comp->call_method('localstyle');
+% }
 <link rel="stylesheet" type="text/css" media="print" href="<% $printuri %>" />
 % if ( $debug ) {
 %# Debugging code:
