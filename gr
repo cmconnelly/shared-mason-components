@@ -89,7 +89,6 @@ The gr component is based on the idea of a similar command provided by
 Userland Frontier.
 
 </%doc>
-
 <% $result %>\
 %#<a href="<% $link{URL} %>"><% $link{Text} %></a>\
 %# if ( $link{Text} =~ m/not defined/ ) {
