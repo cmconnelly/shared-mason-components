@@ -63,7 +63,8 @@ my $pageuri = URI->new_abs($pagepath, $siteroot);
 
 my $csspath    =  'stylesheets/' . $stylesheet . '.css';
 my $cssabsuri  =  URI->new_abs($csspath, $siteroot);
-my $cssuri     =  $cssabsuri->rel($pageuri);
+#my $cssuri     =  $cssabsuri->rel($pageuri);
+my $cssuri     =  $cssabsuri;
 my $printuri   =  $cssuri;
 $printuri      =~ s/$stylesheet/print/;
 ## ----------------------------------- 
