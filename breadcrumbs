@@ -1,0 +1,83 @@
+<%doc>
+
+$Id: $
+
+breadcrumbs HTML::Mason component
+Copyright (C) 2005  Claire Connelly
+
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of the
+   License, or (at your option) any later version.
+ 
+   This program is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
+ 
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+   USA
+ 
+This component creates a ``breadcrumb'' list that can be used in
+HTML::Mason sites.  It specifies various CSS hooks for styling.
+
+Use:
+
+Put
+
+   <& breadcrumbs &>
+
+in your autohandler file and a breadcrumb list will appear in the
+rendered page.
+
+The list is formatted as
+
+   <ul id="breadcrumbs">
+   <li class="first"><a href="http://www.my.domain/">Home</a></li>
+   <li><a href="http://www.my.domain/topdir/">topdir</a></li>
+   <li><a href="http://www.my.domain/topdir/subdir1/">subdir1</a></li>
+   <li><a href="http://www.my.domain/topdir/subdir1/subdir2/">subdir2</a></li>
+   </ul>
+
+</%doc>
+<%init>
+
+### Output debugging information?
+my $debug = 0;
+
+our ($webhostname, $pageuri, $siteroot); 
+my $crumbsr = $siteroot;
+$crumbsr =~ s|/$||;
+
+
+# Get a list of directories in the path.
+my @dirs = split ('/', $m->request_comp->dir_path );
+push @dirs, '' unless @dirs;
+
+
+my $output = join " ", @dirs;
+
+my @crumbtrail;
+
+
+while ( @dirs  ) {
+  my $class;
+  my $path = $crumbsr . ( join "/", @dirs ) . "/";
+  my $title = pop @dirs;
+  if ( $title eq "" ) {
+    $title = "Home";
+    $class = " class=\"first\"";
+  } 
+
+  push @crumbtrail, "<li$class><a href=\"$path\">$title</a></li>\n";
+}
+
+print "<ul id=\"breadcrumbs\">\n";
+
+while ( @crumbtrail ) {
+  print ( pop @crumbtrail );
+}
+print "</ul>\n";
+</%init>
