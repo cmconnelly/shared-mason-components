@@ -1,0 +1,114 @@
+<div class="rssfeed">
+% if ( $title ) {
+<h3>\
+%   if ( $sitelink ) {
+<a href="<% $sitelink %>">\
+%   }
+<% $title %>
+%   if ( $sitelink ) {
+</a>\
+%   }
+</h3>
+% }
+<ul>
+% foreach my $item ( @{ $feed->{'items'} } ) {
+%   my $dcdate = $item->{dc}->{date};
+%   my $parsedate = str2time($dcdate);
+%   my @localdate = localtime($parsedate);
+%
+% # Format is:            H:MM *M TZ, Day, Month Date, Year
+% my $timetemplate    = '%l:%M %p %Z, %A, %B %e, %Y';
+% my $itemtime     = Date::Format::strftime($timetemplate, @localdate);
+<li><a href="<% $item->{'link'} %>"><% $item->{'title'} %></a> \
+<span class="feedtimestamp">(<% $itemtime %>)</span></li>
+% }
+</ul>
+</div>
+<%once>
+use XML::RSS;
+use LWP::Simple;
+use Date::Parse;
+use Date::Format;
+</%once>
+
+
+<%init>
+my $feed = new XML::RSS;
+my $cache = $m->cache;
+my $content;
+
+unless ( $content = $cache->get($src)) {
+  $content = get($src);
+  $cache->set('$src' => $content, '1h');
+}
+
+my $news = $feed->parse($content);
+</%init>
+<%args>
+$src
+$title
+$sitelink
+</%args>
+<%doc>
+
+rssfeed - HTML::Mason Component for including RSS feeds in webpages
+
+Copyright (C) 2005 Claire M. Connelly <cmc@math.hmc.edu>
+                   and the Department of Mathematics
+ 		   Harvey Mudd College, Claremont, CA, USA.
+
+$Id:$
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or (at
+your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+USA
+
+
+A reimplementation of Dennis Watson's rssportlet.  It started as my
+trying to figure out why Dennis's code didn't work, and ended up being
+a complete reimplementation.
+
+
+Usage:
+
+  <& rssfeed, src=>'http://rss.source.system/path/to/rss/file.xml' &>
+
+Additional optional parameters:
+
+  title     A title to appear inside third-level header tags (h3)
+  sitelink  A URL to be used as a link for the title
+
+
+This component produces output in the rendered page similar to
+
+   <div class="rssfeed">
+   <h3>Math Computing News</h3>
+   <ul>
+   <li><a href="item_link">item_title</a> <span class="time">(item_timestamp)</span></li>
+   </ul>
+   </div>
+
+where item_link is the link to the item identified by item_title on
+the main site.  item_timestamp is the timestamp taken from the RSS
+feed.
+
+These tags can be used to style the feed information using Cascading
+Style Sheets, as in
+
+   div.rssfeed { }
+   div.rssfeed h3 { }
+   div.rssfeed ul { }
+   usw.
+
+</%doc>
