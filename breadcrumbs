@@ -71,7 +71,7 @@ while ( @dirs  ) {
     $class = " class=\"first\"";
   } 
 
-  push @crumbtrail, "<li$class><a href=\"$path\">$title</a></li>\n";
+  push @crumbtrail, "<li$class><a href=\"$path\">\u$title</a></li>\n";
 }
 
 print "<ul id=\"breadcrumbs\">\n";
