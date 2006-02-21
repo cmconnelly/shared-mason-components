@@ -29,14 +29,15 @@ Stylesheets are assumed to be stored in the /stylesheets directory for
 the site.
 
 </%doc>
-
 <link rel="stylesheet" type="text/css" media="screen" href="<% $cssuri %>" />
-<link rel="stylesheet" type="text/css" media="print" href="<% $printuri %>" />
+<link rel="stylesheet" type="text/css" media="print" href="<% $printuri %>" />\
 %# print $m->request_comp->method_exists('localstyle'), "\n";
 % if ( $m->request_comp->method_exists('localstyle') ) {
+%    unless ( $m->request_comp->call_method('localstyle') eq "" ) {
 <style type="text/css" media="screen">
-% print $m->request_comp->call_method('localstyle');
+%    print $m->request_comp->call_method('localstyle');
 </style>
+%    }
 % }
 % if ( $debug ) {
 %# Debugging code:
