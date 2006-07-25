@@ -30,14 +30,13 @@ the site.
 
 </%doc>
 <link rel="stylesheet" type="text/css" media="screen" href="<% $cssuri %>" />
-<link rel="stylesheet" type="text/css" media="print" href="<% $printuri %>" />\
-%# print $m->request_comp->method_exists('localstyle'), "\n";
-% if ( $m->request_comp->method_exists('localstyle') ) {
-%    unless ( $m->request_comp->call_method('localstyle') eq "" ) {
+<link rel="stylesheet" type="text/css" media="print" href="<% $printuri %>" />
+% unless ( $m->request_comp->scall_method('localstyle') eq "" ) {
 <style type="text/css" media="screen">
-%    print $m->request_comp->call_method('localstyle');
+%   print $m->request_comp->scall_method('localstyle');
 </style>
-%    }
+% } else {
+\
 % }
 % if ( $debug ) {
 %# Debugging code:
