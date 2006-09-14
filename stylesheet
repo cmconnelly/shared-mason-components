@@ -61,8 +61,7 @@ my $stylesheet =  $args[0];
 my $debug = 0;
 
 ### Figure out the hostname.
-my $s = Apache->server;
-my $hostname = $s->server_hostname;
+my $hostname = $r->server->server_hostname;
 
 ### Get the URI of this page from Apache.
 my $requri = $r->uri;
