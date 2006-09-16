@@ -220,7 +220,7 @@ if ( ! defined $lastdirpath
 
         my $glosshashref = YAML::Load ( $data );
 
-        %glossary = %{ $glosshashref };
+        %glossary = ( %glossary, %{ $glosshashref } );
 
     }
 
