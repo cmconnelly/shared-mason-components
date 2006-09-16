@@ -204,7 +204,7 @@ if ( ! defined $lastdirpath
     ### site.
 
 
-    my @glossary;
+#    my @glossary;
 
     while ( @glossaries ) {
 	my $glossfile = pop @glossaries;
@@ -216,29 +216,13 @@ if ( ! defined $lastdirpath
 	# Skip this one if the file is empty.
 	next if ( $data =~ m/^\s*\z/ );
 
-	# Construct an array from the data in the string.
-	my @glossdata = eval ( $data );
+        # Construct a hash from the data in the string.
 
+        my $glosshashref = YAML::Load ( $data );
 
-	if ( $@ ) {
-	    print "Perl Error parsing glossary $glossfile: $@" if ( $debug >= 1 );
-	    next;
-	}
+        %glossary = %{ $glosshashref };
 
-	if ( scalar(@glossdata) % 2 != 0 ) {
-	    if ( $debug >= 1 ) {
-		print "Grumble grumble, you can't even format $glossfile right!\n";
-		print "Discarding ", (pop @glossdata), "...\n";
-	    }
-	}
-
-	# Add the contents of that glossary to our master glossary array.
-	push @glossary, @glossdata;
     }
-
-    ### Turn the glossary array into a hash.
-
-    %glossary = @glossary;
 
 } else {
     print "\n<br />Reusing loaded glossary for $dirpath\n<br />\n" if $debug >= 1;
