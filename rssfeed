@@ -36,10 +36,11 @@ use Date::Format;
 my $feed = new XML::RSS;
 my $cache = $m->cache;
 my $content;
+my $cacheexpiry = '1h';
 
 unless ( $content = $cache->get($src)) {
   $content = get($src);
-  $cache->set('$src' => $content, '1h');
+  $cache->set('$src' => $content, $cacheexpiry);
 }
 
 my $news = $feed->parse($content);
