@@ -273,10 +273,11 @@ if ( defined $glossary_entry ) {
       $result .= '">';
     }
     if ( $linktext ne "" ) {
-        $link{Text} = $linktext;
-    }
-    if ( ( $link{Explanation} ) and ( $expflag ) ) {
+      $link{Text} = $linktext;
+    } else {
+      if ( ( $link{Explanation} ) and ( $expflag ) ) {
         $link{Text} = '<abbr title="' . $link{Explanation} . '">' . $link{Text} . '</abbr>';
+      }
     }
     $result .= $link{Text};
       if ( $link{URL} ne "" ) {
