@@ -3,6 +3,8 @@
 steps -- HTML::Mason component to create next and previous links
          based on a list of directories or pages.
 
+$Id:$
+
 Copyright (C) 2006 Claire Connelly and the Harvey Mudd College
 Department of Mathematics.
 
