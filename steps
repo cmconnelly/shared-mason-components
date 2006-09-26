@@ -51,11 +51,11 @@ Department of Mathematics.
 % unless ( ( ! $nextlink eq "/" ) and ( ! $prevlink eq "/" ) ) {
 <p class="nextprev">
 %   unless ( $prevlink eq "/" ) {
-<a href="<% $prevlink %>"><% $plink %> (<% $prevtitle %>)</a>
-%   print " | " if ( ! $nextlink eq "" );
+<a class="prev" href="<% $prevlink %>"><abbrev title="<% $prevtitle %>"><% $plink %></abbrev></a>
+%#   print " | " if ( ! $nextlink eq "" );
 %   }
 %   unless ( $nextlink eq "/" ) {
-<a href="<% $nextlink %>"><% $nlink %> (<% $nexttitle %>)</a></p>
+<a class="next" href="<% $nextlink %>"><abbrev title="<% $nexttitle %>"><% $nlink %></abbrev></a></p>
 %   }
 % }
 <%init>
@@ -122,7 +122,7 @@ if ( defined $match_idx ) {
   } else {
     # Out of steps; go back to the start.
     $next = $steps[0];
-    $nlink = "Back to Top";
+    $nlink = "Back to Start";
   }
 } else {
   # not found, do something else
