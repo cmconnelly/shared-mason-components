@@ -36,10 +36,19 @@ The list is formatted as
 
    <ul id="breadcrumbs">
    <li class="first"><a href="http://www.my.domain/">Home</a></li>
-   <li><a href="http://www.my.domain/topdir/">topdir</a></li>
-   <li><a href="http://www.my.domain/topdir/subdir1/">subdir1</a></li>
-   <li><a href="http://www.my.domain/topdir/subdir1/subdir2/">subdir2</a></li>
+   <li><a href="http://www.my.domain/topdir/">Top Dir Title</a></li>
+   <li><a href="http://www.my.domain/topdir/subdir1/">Subdir Title</a></li>
+   <li>Current Page</li>
    </ul>
+
+Titles are obtained from a section method defined in a file called
+metadata that can be created in any directory.  If no such file
+exists, the breadcrumbs component will attempt to read an index.html
+file from each directory and parse that file looking for a title
+method.
+
+The ``Home'' link is created for the top of the tree, and cannot
+(currently) be changed.
 
 </%doc>
 <%init>
@@ -47,33 +56,70 @@ The list is formatted as
 ### Output debugging information?
 my $debug = 0;
 
+### Bring in some information from the master autohandler.
 our ($webhostname, $pageuri, $siteroot); 
+
 my $crumbsr = $siteroot;
 $crumbsr =~ s|/$||;
 
 
-# Get a list of directories in the path.
-my @dirs = split ('/', $m->request_comp->dir_path );
+### Get a list of directories in the path to the top of the tree.
+my $curpath = $m->request_comp->dir_path;
+my @dirs = split ('/', $curpath );
 push @dirs, '' unless @dirs;
 
 
 my $output = join " ", @dirs;
 
+### Assemble the breadcrumb trail.
+
 my @crumbtrail;
 
-
 while ( @dirs  ) {
+  # Loop through our directory list, examining each path.
+
   my $class;
-  my $path = $crumbsr . ( join "/", @dirs ) . "/";
-  my $title = pop @dirs;
-  if ( $title eq "" ) {
+  my $title;
+  my $path = ( join "/", @dirs );
+
+  if ( $path eq "" ) {
+    # If we're at the top, create a link to the home page for the site.
     $title = "Home";
     $class = " class=\"first\"";
-  } 
+  } else {
+    # Otherwise, we look for a metadata file or index.html.
+    my $crumbmetapath = $path . "/metadata";
+    my $crumbpagepath = $path . "/index.html";
 
-  push @crumbtrail, "<li$class><a href=\"$path\">\u$title</a></li>\n";
+    if ( $m->comp_exists($crumbmetapath) ) {
+      # If a metadata file exists, parse it and pull out the section 
+      #  method to use as a title.
+      my $mdcont = $m->fetch_comp($crumbmetapath);
+      if ( $mdcont->method_exists('section') ) {
+	$title = $mdcont->scall_method('section');
+      } 
+    } elsif ( $m->comp_exists($crumbpagepath) ) {
+      # If not, look for an index.html file, and parse it, pulling out
+      #  the title of the page.
+      my $pagecontent = $m->fetch_comp($crumbpagepath);
+      $title = $pagecontent->scall_method('title');
+    }
+  }
+
+  # With our crumb title, create a simple list item if the link would be
+  #  to the current page, or create a link if the link is to another 
+  #  directory or page.
+  if ( $path eq $curpath ) {
+    push @crumbtrail, "<li$class>$title</li>\n";
+  } else {
+    push @crumbtrail, "<li$class><a href=\"$path\">\u$title</a></li>\n";
+  }
+
+  # Throw away that bit of the path, and we'll go again.
+  pop @dirs;
 }
 
+### Actually output the breadcrumb list.
 print "<ul id=\"breadcrumbs\">\n";
 
 while ( @crumbtrail ) {
