@@ -1,0 +1,153 @@
+<%doc>
+
+steps -- HTML::Mason component to create next and previous links
+         based on a list of directories or pages.
+
+Copyright (C) 2006 Claire Connelly and the Harvey Mudd College
+Department of Mathematics.
+
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+   USA
+
+
+know what the sequence is
+know where we are
+create a next and previous link based on our position
+
+</%doc>
+
+
+
+<p>
+<code>
+%# print "\$callingdir   = $callingdir <br/>"; 
+%# print "\$steporderdir = $steporderdir <br/>"; 
+%# print "\$curstep      = $curstep <br/>"; 
+%# print ( join "<br/>" , @stepinfo );
+%# print "\$prev         = $prev <br/>"; 
+%# print "\$next         = $next <br/>"; 
+%# print "\$curpath      = $curpath <br/>"; 
+%# print "\$prevpath     = $prevpath <br/>"; 
+%# print "\$nextpath     = $nextpath <br/>"; 
+%# print "\$cururi       = $cururi <br/>"; 
+%# print "\$prevuri      = $prevuri <br/>"; 
+%# print "\$nexturi      = $nexturi <br/>"; 
+%# print "\$prevlink     = $prevlink <br/>"; 
+%# print "\$nextlink     = $nextlink <br/>"; 
+%# print "\$siteroot     = $siteroot <br/>"; 
+</code>
+</p>
+
+%# <p><% join ", ", @steps %></p>
+
+<p class="nextprev">previous (page title)| next (page title)</p>
+
+<%init>
+our ( $siteroot );
+
+my $debug = 0;
+my $stepordername = "steporder";
+
+
+my $callingpage = $m->request_comp->path;
+my $callingdir  = $m->request_comp->dir_path;
+
+my @dirs        = split ("/",  $callingdir);
+
+my @stepinfo;
+
+while (@dirs) {
+  my $path = join('/', @dirs );
+  print "\$path is $path\n" if ( $debug >= 1 );
+  my $stepordertest = "$path/$stepordername";
+  print "\n<br/> checking '$stepordertest'" if ( $debug >= 2 );
+  if ( $m->comp_exists($stepordertest) ) {
+    print " -- found!" if ( $debug >= 2 );
+    push ( @stepinfo, $path );
+    last;
+  }
+  pop @dirs;
+}
+
+#$steporder = 0;
+
+
+my $steporderdir  = shift @stepinfo;
+my $steporderfile = $steporderdir . "/" . $stepordername;
+
+# Slurp in the contents of the glossary file as a string.
+my $stepref = YAML::Load ( $m->scomp($steporderfile) ) ;
+my @steps   = @{ $stepref }; 
+
+
+
+my $curstep =  $callingdir;
+$curstep    =~ s|$steporderdir\/||;
+
+### FIgure our position in the list.
+my ($i, $match_idx);
+for ($i = 0; $i < @steps; $i++ ) {
+  if ( $steps[$i] =~ m/$curstep/ ) {
+    $match_idx = $i;
+    last;
+  }
+}
+
+my ( $prev, $next );
+
+if ( defined $match_idx ) {
+
+  if ( ( $match_idx - 1 ) >= 0 ) {
+    $prev = $steps[$match_idx - 1];
+  } else {
+    $prev = $steps[0];
+  }
+
+
+  if ( ( $match_idx + 1 ) < @steps ) {
+    $next = $steps[$match_idx + 1];
+  } else {
+    $next = $steps[0];
+  }
+} else {
+  # not found, do something else
+}
+
+$siteroot    =~ s|/$||;
+
+my $curpath  = $callingdir;
+my $prevpath = $steporderdir . "/" . $prev;
+my $nextpath = $steporderdir . "/" . $next;
+
+my $prevuri = URI->new_abs( $siteroot . $prevpath, $siteroot );
+my $cururi  = URI->new_abs( $siteroot . $curpath,  $siteroot );
+my $nexturi = URI->new_abs( $siteroot . $nextpath, $siteroot );
+
+my $prevlink = $prevuri->rel($cururi);
+my $nextlink = $nexturi->rel($cururi);
+
+my ( $prevtitle, $nexttitle);
+
+my $previndex = $prevpath . '/index.html';
+
+if ( $m->comp_exists($prevpath) ) {
+  print "yes, $prevpath exists\n";
+} elsif ( $m->comp_exists( $previndex ) ) {
+  print "yes, $previndex exists\n";
+} else {
+  print "Nope, can't find $prevpath\n";
+}
+
+</%init>
