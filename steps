@@ -20,46 +20,52 @@ Department of Mathematics.
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
    USA
-
-
-know what the sequence is
-know where we are
-create a next and previous link based on our position
-
+   
 </%doc>
 
 
 
-<p>
-<code>
-%# print "\$callingdir   = $callingdir <br/>"; 
-%# print "\$steporderdir = $steporderdir <br/>"; 
-%# print "\$curstep      = $curstep <br/>"; 
-%# print ( join "<br/>" , @stepinfo );
-%# print "\$prev         = $prev <br/>"; 
-%# print "\$next         = $next <br/>"; 
-%# print "\$curpath      = $curpath <br/>"; 
-%# print "\$prevpath     = $prevpath <br/>"; 
-%# print "\$nextpath     = $nextpath <br/>"; 
-%# print "\$cururi       = $cururi <br/>"; 
-%# print "\$prevuri      = $prevuri <br/>"; 
-%# print "\$nexturi      = $nexturi <br/>"; 
-%# print "\$prevlink     = $prevlink <br/>"; 
-%# print "\$nextlink     = $nextlink <br/>"; 
-%# print "\$siteroot     = $siteroot <br/>"; 
-</code>
-</p>
+%# <p>
+%# <code>
+%# % print "\$callingdir   = $callingdir <br/>"; 
+%# % print "\$steporderdir = $steporderdir <br/>"; 
+%# % print "\$curstep      = $curstep <br/>"; 
+%# % print ( join "<br/>" , @stepinfo );
+%# % print "\$prev         = $prev <br/>"; 
+%# % print "\$next         = $next <br/>"; 
+%# % print "\$curpath      = $curpath <br/>"; 
+%# % print "\$prevpath     = $prevpath <br/>"; 
+%# % print "\$nextpath     = $nextpath <br/>"; 
+%# % print "\$baseuri      = $baseuri <br/>"; 
+%# % print "\$cururi       = $cururi <br/>"; 
+%# % print "\$prevuri      = $prevuri <br/>"; 
+%# % print "\$nexturi      = $nexturi <br/>"; 
+%# % print "\$prevlink     = $prevlink <br/>"; 
+%# % print "\$nextlink     = $nextlink <br/>"; 
+%# % print "\$siteroot     = $siteroot <br/>"; 
+%# </code>
+%# </p>
 
 %# <p><% join ", ", @steps %></p>
 
-<p class="nextprev">previous (page title)| next (page title)</p>
-
+% unless ( ( ! $nextlink eq "/" ) and ( ! $prevlink eq "/" ) ) {
+<p class="nextprev">
+%   unless ( $prevlink eq "/" ) {
+<a href="<% $prevlink %>"><% $plink %> (<% $prevtitle %>)</a>
+%   print " | " if ( ! $nextlink eq "" );
+%   }
+%   unless ( $nextlink eq "/" ) {
+<a href="<% $nextlink %>"><% $nlink %> (<% $nexttitle %>)</a></p>
+%   }
+% }
 <%init>
 our ( $siteroot );
 
 my $debug = 0;
 my $stepordername = "steporder";
 
+my $plink = "Previous";
+my $nlink = "Next";
 
 my $callingpage = $m->request_comp->path;
 my $callingdir  = $m->request_comp->dir_path;
@@ -81,9 +87,6 @@ while (@dirs) {
   pop @dirs;
 }
 
-#$steporder = 0;
-
-
 my $steporderdir  = shift @stepinfo;
 my $steporderfile = $steporderdir . "/" . $stepordername;
 
@@ -91,12 +94,10 @@ my $steporderfile = $steporderdir . "/" . $stepordername;
 my $stepref = YAML::Load ( $m->scomp($steporderfile) ) ;
 my @steps   = @{ $stepref }; 
 
-
-
 my $curstep =  $callingdir;
-$curstep    =~ s|$steporderdir\/||;
+$curstep    =~ s|$steporderdir(/)?||g;
 
-### FIgure our position in the list.
+### Figure our position in the list.
 my ($i, $match_idx);
 for ($i = 0; $i < @steps; $i++ ) {
   if ( $steps[$i] =~ m/$curstep/ ) {
@@ -119,35 +120,55 @@ if ( defined $match_idx ) {
   if ( ( $match_idx + 1 ) < @steps ) {
     $next = $steps[$match_idx + 1];
   } else {
+    # Out of steps; go back to the start.
     $next = $steps[0];
+    $nlink = "Back to Top";
   }
 } else {
   # not found, do something else
+  $next = $steps[1];
+  $prev = "";
 }
 
 $siteroot    =~ s|/$||;
 
-my $curpath  = $callingdir;
+my $baseuri  = URI->new_abs( $siteroot . $steporderdir, $siteroot );
+my $curpath  = $callingpage;
 my $prevpath = $steporderdir . "/" . $prev;
 my $nextpath = $steporderdir . "/" . $next;
 
-my $prevuri = URI->new_abs( $siteroot . $prevpath, $siteroot );
+my $prevuri = URI->new_abs( $siteroot . $prevpath . '/', $siteroot );
 my $cururi  = URI->new_abs( $siteroot . $curpath,  $siteroot );
-my $nexturi = URI->new_abs( $siteroot . $nextpath, $siteroot );
+my $nexturi = URI->new_abs( $siteroot . $nextpath . '/', $siteroot );
 
 my $prevlink = $prevuri->rel($cururi);
 my $nextlink = $nexturi->rel($cururi);
 
 my ( $prevtitle, $nexttitle);
 
-my $previndex = $prevpath . '/index.html';
+my $previndex = $prevpath . '/index.html' if ( $prevpath !~ m/.html$/ );
+my $nextindex = $nextpath . '/index.html' if ( $nextpath !~ m/.html$/ );
 
 if ( $m->comp_exists($prevpath) ) {
-  print "yes, $prevpath exists\n";
+	my $prevcont = $m->fetch_comp($prevpath);
+	my $prevtitle = $prevcont->call_method('title');
 } elsif ( $m->comp_exists( $previndex ) ) {
-  print "yes, $previndex exists\n";
+	my $prevcont = $m->fetch_comp($previndex);
+	$prevtitle = $prevcont->scall_method('title');
 } else {
-  print "Nope, can't find $prevpath\n";
+#  print "Nope, can't find $prevpath or $previndex.\n";
 }
+
+if ( $m->comp_exists($nextpath) ) {
+	my $nextcont = $m->fetch_comp($nextpath);
+	my $nexttitle = $nextcont->call_method('title');
+} elsif ( $m->comp_exists( $nextindex ) ) {
+	my $nextcont = $m->fetch_comp($nextindex);
+	$nexttitle = $nextcont->scall_method('title');
+} else {
+#  print "Nope, can't find $nextpath or $nextindex.\n";
+}
+
+
 
 </%init>
