@@ -151,7 +151,7 @@ my $nextindex = $nextpath . '/index.html' if ( $nextpath !~ m/.html$/ );
 
 if ( $m->comp_exists($prevpath) ) {
 	my $prevcont = $m->fetch_comp($prevpath);
-	my $prevtitle = $prevcont->call_method('title');
+	my $prevtitle = $prevcont->scall_method('title');
 } elsif ( $m->comp_exists( $previndex ) ) {
 	my $prevcont = $m->fetch_comp($previndex);
 	$prevtitle = $prevcont->scall_method('title');
@@ -161,7 +161,7 @@ if ( $m->comp_exists($prevpath) ) {
 
 if ( $m->comp_exists($nextpath) ) {
 	my $nextcont = $m->fetch_comp($nextpath);
-	my $nexttitle = $nextcont->call_method('title');
+	my $nexttitle = $nextcont->scall_method('title');
 } elsif ( $m->comp_exists( $nextindex ) ) {
 	my $nextcont = $m->fetch_comp($nextindex);
 	$nexttitle = $nextcont->scall_method('title');
