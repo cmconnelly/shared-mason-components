@@ -62,6 +62,12 @@ our ($webhostname, $pageuri, $siteroot);
 my $crumbsr = $siteroot;
 $crumbsr =~ s|/$||;
 
+if ( $debug > 1 ) {
+  print "\$webhostname = $webhostname<br/>\n";
+  print "\$pageuri     = $pageuri<br/>\n";
+  print "\$siteroot    = $siteroot<br/>\n";
+}  
+
 
 ### Get a list of directories in the path to the top of the tree.
 my $curpath = $m->request_comp->dir_path;
@@ -81,11 +87,12 @@ while ( @dirs  ) {
   my $class;
   my $title;
   my $path = ( join "/", @dirs );
-
+  print "\$path = $path<br/>\n" if ( $debug > 0 );
   if ( $path eq "" ) {
     # If we're at the top, create a link to the home page for the site.
     $title = "Home";
     $class = " class=\"first\"";
+    $path  = "/";
   } else {
     # Otherwise, we look for a metadata file or index.html.
     my $crumbmetapath = $path . "/metadata";
@@ -112,7 +119,13 @@ while ( @dirs  ) {
   if ( $path eq $curpath ) {
     push @crumbtrail, "<li$class>$title</li>\n";
   } else {
-    push @crumbtrail, "<li$class><a href=\"$path\">\u$title</a></li>\n";
+    print "\$crumbsr = $crumbsr<br/>\n" if ( $debug > 0 );
+    my $fulllink = $crumbsr . $path;
+    my $crumburi = URI->new_abs ( $fulllink, $siteroot );
+    print "\$crumburi = $crumburi<br/>\n" if ( $debug > 0 );
+    my $linkuri  = $crumburi->rel( $pageuri );
+    print "\linkuri   = $linkuri<br/>\n" if ( $debug > 0 );
+    push @crumbtrail, "<li$class><a href=\"$linkuri\">\u$title</a></li>\n";
   }
 
   # Throw away that bit of the path, and we'll go again.
