@@ -3,7 +3,7 @@
 steps -- HTML::Mason component to create next and previous links
          based on a list of directories or pages.
 
-$Id:$
+$Id$
 
 Copyright (C) 2006 Claire Connelly and the Harvey Mudd College
 Department of Mathematics.
@@ -53,11 +53,11 @@ Department of Mathematics.
 % unless ( ( ! $nextlink eq "/" ) and ( ! $prevlink eq "/" ) ) {
 <p class="nextprev">
 %   unless ( $prevlink eq "/" ) {
-<a class="prev" href="<% $prevlink %>"><abbrev title="<% $prevtitle %>"><% $plink %></abbrev></a>
+<a class="prev" href="<% $prevlink %>"><abbr title="<% $prevtitle %>"><% $plink %></abbr></a>
 %#   print " | " if ( ! $nextlink eq "" );
 %   }
 %   unless ( $nextlink eq "/" ) {
-<a class="next" href="<% $nextlink %>"><abbrev title="<% $nexttitle %>"><% $nlink %></abbrev></a></p>
+<a class="next" href="<% $nextlink %>"><abbr title="<% $nexttitle %>"><% $nlink %></abbr></a></p>
 %   }
 % }
 <%init>
