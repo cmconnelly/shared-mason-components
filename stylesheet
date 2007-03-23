@@ -68,7 +68,7 @@ $media         = $args{Media} if ( $args{Media} );
    
 
 ### Output debugging information?
-my $debug = 1;
+my $debug = 0;
 
 ### Figure out the hostname.
 my $hostname = $r->server->server_hostname;
