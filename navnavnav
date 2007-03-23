@@ -4,12 +4,10 @@
 %# %# $path = <% $path %>
 %# </code>
 %# </p>
-<div id="sidenavbar">
 % print_menus ($navinfo);
-</div>
 <%init>
 use Data::Dumper;
-my $debug = 1;
+my $debug = 0;
 
 
 ### Grab some information about our working environment.
@@ -35,14 +33,7 @@ my @dirs = split "/", $m->request_comp->dir_path;
 my $maxdepth = @dirs;
 # print "<code>\$maxdepth is $maxdepth</code><br/>\n";
 
-# my $depth = 0;
-# while ( $depth < 10 ) {
-#   print "<code>component $depth: $dirs[$depth]</code><br/>\n";
-#   ++$depth;
-# }
-
-
-my $navinfo;  # This will be a reference to a hash with the combined nav data.
+my $navinfo;  # A reference to a hash with the combined nav data.
               # "Build from the bottom up, not the top down" -- FDR.
 my $lastlevel; # The name of the most recent level we processed
 
@@ -78,7 +69,7 @@ while ( @dirs ) {
 
     if ( $debug > 3 ) {
       print "<pre style=\"clear: both;\">\n";
-      print Dumper ( $thislevel );
+      print Dumper ( $navinfo );
       print "\n</pre>\n";
     }
 
@@ -86,7 +77,6 @@ while ( @dirs ) {
       $thislevel->{$key}{Path} = $path . "/" . $thislevel->{$key}{Path};
     }
 
-    # $thislevel->{LoadedFrom} = $file;
     if (defined $navinfo) {
     	# We aren't the first time through, we already have data from somewhere
     	# deeper in the hierarchy  e.g., we just did
@@ -108,12 +98,15 @@ while ( @dirs ) {
 
 
 
+### Print out the entire data structure for the navigation hash.
 if ( $debug > 3 ) {
   print "<pre style=\"clear: both;\">\n";
   print Dumper ( $navinfo );
   print "\n</pre>\n";
 }
 
+
+### Define the routine for generating menus.
 sub print_menus ($);
 sub print_menus ($) {
   print "<ul>\n";
@@ -143,7 +136,7 @@ sub print_menus ($) {
     $pageuri    =~ s|(http://.*/).*\.html$|$1|;
     
 
-#    if ( $debug ) {
+#    if ( 1 ) {
 #      print "<code>\$requri:   $requri</code><br/>\n";
 #     print "<code>\$navpath:     $navpath</code><br/>\n";
 #     print "<code>\$siteroot:    $siteroot</code><br/>\n";
@@ -151,7 +144,14 @@ sub print_menus ($) {
 #     print "<code>\$linkuri:     $linkuri</code><br/>\n";
 #     print "<code>\$reluri:      $reluri</code><br/>\n";
 #     print "<code>\$pagesect:    $pagesect</code><br/>\n";
-#     print "<code>\$linksecturi: $linksecturi</code><br/>\n";#    }
+#     print "<code>\$linksecturi: $linksecturi</code><br/>\n";
+
+#      print "<br/>";
+#      print "<code>Title: $navElem->{Title}</code><br/>\n";
+#      print "<code>Path:  $navElem->{Path}</code><br/>\n";
+#      print "<code>Order: $navElem->{Order}</code><br/>\n";
+#      print "<code>Submenu: $navElem->{Submenu}</code><br/>\n";
+#    }
 
 
     # Actually create the list item and link.
