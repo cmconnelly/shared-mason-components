@@ -25,12 +25,19 @@ stylesheet to use for the page/template, as in
 
    <& /stylesheet, 'mystylesheet' &>
 
+You may also specify what media the stylesheet should be used for,
+as in
+
+   <& /stylesheet, 'print', media=>'print' &>
+
+(The default media type is screen, and if not specified in your
+component call, the component will specify screen in its output.)
+
 Stylesheets are assumed to be stored in the /stylesheets directory for
 the site.
 
 </%doc>
-<link rel="stylesheet" type="text/css" media="screen" href="<% $cssuri %>" />
-<link rel="stylesheet" type="text/css" media="print" href="<% $printuri %>" />
+<link rel="stylesheet" type="text/css" media="<% $media %>" href="<% $cssuri %>" />\
 % unless ( $m->request_comp->scall_method('localstyle') eq "" ) {
 <style type="text/css" media="screen">
 %   print $m->request_comp->scall_method('localstyle');
@@ -50,15 +57,18 @@ the site.
 % print "cssabsuri      = $cssabsuri\n";
 % print "cssuri         = $cssuri\n";
 % print "stylesheet     = $stylesheet\n";
+% print "media          = $media\n";
 % print "-->\n";
 % }
 <%init>
-my @args = @_;
-my $stylesheet =  $args[0];
-#my $localstyle =  $args[1];
+my $stylesheet =  shift @_;
+my %args       = @_;
+my $media      = "screen";
+$media         = $args{Media} if ( $args{Media} );
+   
 
 ### Output debugging information?
-my $debug = 0;
+my $debug = 1;
 
 ### Figure out the hostname.
 my $hostname = $r->server->server_hostname;
@@ -82,6 +92,5 @@ my $csspath    =  'stylesheets/' . $stylesheet . '.css';
 my $cssabsuri  =  URI->new_abs($csspath, $siteroot);
 #my $cssuri     =  $cssabsuri->rel($pageuri);
 my $cssuri     =  $cssabsuri;
-my $printuri   =  $cssuri;
-$printuri      =~ s/$stylesheet/print/;
+
 </%init>
