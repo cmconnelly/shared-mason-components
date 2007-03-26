@@ -7,7 +7,7 @@
 % print_menus ($navinfo);
 <%init>
 use Data::Dumper;
-my $debug = 0;
+my $debug = 4;
 
 
 ### Grab some information about our working environment.
@@ -45,7 +45,7 @@ my $lastlevel; # The name of the most recent level we processed
 while ( @dirs ) {
     my $path = join ( '/', @dirs );
     my $file = "$path/$navfile";
-#    print "<code>\$file is $file</code><br/>\n";
+    print "<code>\$file is $file</code><br/>\n" if ( $debug );
     unless ( $m->comp_exists ($file) ) {
        # No navigation file, that's okay out at the leaves, but not okay
        # after we find our first navigation file.

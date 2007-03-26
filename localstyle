@@ -1,0 +1,46 @@
+<%doc>
+
+$Id: stylesheet 583 2007-03-23 22:53:31Z cmc $
+
+localstyle HTML::Mason component
+Copyright (C) 2007 Claire Connelly
+
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+   USA
+
+This component inserts the contents of a localstyle method into the
+page, if one exists.  It is used in the header of the document (in
+the autohandler), generally as
+
+   <& /localstyle &>
+
+
+By default, the <style> tag will specify the
+screen media type, but the media type can be specified with an
+argument of the form 
+
+   <& /localstyle, 'print', Media=>'print' &>
+
+</%doc>
+% unless ( $m->request_comp->scall_method('localstyle') eq "" ) {
+<style type="text/css" media="<% $media %>">
+%   print $m->request_comp->scall_method('localstyle');
+</style>
+% }
+<%init>
+my %args       = @_;
+my $media      = "screen";
+$media         = $args{Media} if ( $args{Media} );
+</%init>
