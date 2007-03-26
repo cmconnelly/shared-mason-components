@@ -38,13 +38,6 @@ the site.
 
 </%doc>
 <link rel="stylesheet" type="text/css" media="<% $media %>" href="<% $cssuri %>" />\
-% unless ( $m->request_comp->scall_method('localstyle') eq "" ) {
-<style type="text/css" media="screen">
-%   print $m->request_comp->scall_method('localstyle');
-</style>
-% } else {
-\
-% }
 % if ( $debug ) {
 %# Debugging code:
 % print "<!--\n";
