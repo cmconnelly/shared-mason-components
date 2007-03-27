@@ -54,9 +54,6 @@ my $navfile = "navigation";
 # Turn something like "/clinic/projects" into ("", "clinic", "projects").
 my @dirs = split "/", $m->request_comp->dir_path;
 
-my $maxdepth = @dirs;
-# print "<code>\$maxdepth is $maxdepth</code><br/>\n";
-
 my $navinfo;  # A reference to a hash with the combined nav data.
               # "Build from the bottom up, not the top down" -- FDR.
 my $lastlevel; # The name of the most recent level we processed
