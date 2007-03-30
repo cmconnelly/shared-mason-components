@@ -31,7 +31,7 @@ More docs to come.
 % print_menus ($navinfo);
 <%init>
 use Data::Dumper;
-my $debug = 0;
+our $debug = 0;
 
 
 ### Grab some information about our working environment.
@@ -42,17 +42,17 @@ our $lastrequesttime;
 
 # Figure out the directory path to the page being rendered.
 my $dirpath   = $m->request_comp->dir_path;
-# print "<code>\$dirpath is $dirpath</code><br/>\n";
+print "<code>\$dirpath is $dirpath</code><br/>\n" if ( $debug );
 
 my $path   = $m->request_comp->path;
-# print "<code>\$path is $path</code><br/>\n";
+print "<code>\$path is $path</code><br/>\n" if ( $debug );
 
 
 ### Navigation hints file.
-my $navfile = "navigation";
+my $navsrc = "navigation";
 
 # Turn something like "/clinic/projects" into ("", "clinic", "projects").
-my @dirs = split "/", $m->request_comp->dir_path;
+my @dirs = split "/", $dirpath;
 
 my $navinfo;  # A reference to a hash with the combined nav data.
               # "Build from the bottom up, not the top down" -- FDR.
@@ -63,32 +63,32 @@ my $lastlevel; # The name of the most recent level we processed
 # (in that order).  Once we start finding navigation files, we build up
 # our hierarchy of navigation elements in $navinfo
 
-if ( @dirs = "" ) {
-  push @dirs, " ";
-}
+# Add a space to the end of the array in case it's empty (we're at
+# the root of the file system tree).
+push @dirs, " ";
+
 
 while ( @dirs ) {
-    my $path = join ( '/', @dirs );
-    my $file = "$path/$navfile";
-    print "<code>\$file is $file</code><br/>\n" if ( $debug );
-    unless ( $m->comp_exists ($file) ) {
+    my $workingpath = join ( '/', @dirs );
+    $workingpath = "/" if ( $workingpath eq " " );
+    my $navfile = "$workingpath/$navsrc";
+    unless ( $m->comp_exists ($navfile) ) {
        # No navigation file; that's okay out at the leaves, but not okay
        # after we find our first navigation file.
-       if (defined $navinfo) {
-           warn "Missing file $file;  may do wrong thing, who knows";
+       if ( defined $navinfo ) {
+           warn "Missing file $navfile;  may do wrong thing, who knows";
        }
        next;
     }
     # Now we have a navigation file
-    my $navdata = $m->scomp($file);
+    my $navdata = $m->scomp($navfile);
     unless ( defined $navdata ) {
-       warn
-        "WTF?? Couldn't load navdata file $file";
+       warn "Couldn't load navdata file $navfile";
        next;
     }
     my $thislevel = YAML::Load ( $navdata );
     unless ( defined $thislevel ) {
-       warn "WTF?? Couldn't load YAML data for $file";
+       warn "Couldn't load YAML data for $navfile";
        next;
     }
 
@@ -99,7 +99,7 @@ while ( @dirs ) {
     }
 
     foreach my $key ( keys %{ $thislevel } ) {
-      $thislevel->{$key}{Path} = $path . "/" . $thislevel->{$key}{Path};
+      $thislevel->{$key}{Path} = $workingpath . "/" . $thislevel->{$key}{Path};
     }
 
     if (defined $navinfo) {
@@ -107,7 +107,7 @@ while ( @dirs ) {
     	# deeper in the hierarchy  e.g., we just did
     	# "/clinic/projects/navigation" and now we're doing "/clinic/navigation"
         unless ( defined $thislevel->{$lastlevel} ) {
-            warn "Expected to find an entry for $lastlevel in $file";
+            warn "Expected to find an entry for $lastlevel in $navfile";
         }
         $thislevel->{$lastlevel}{Submenu} = $navinfo;
         $navinfo = $thislevel;
@@ -161,22 +161,22 @@ sub print_menus ($) {
     $pageuri    =~ s|(http://.*/).*\.html$|$1|;
     
 
-#    if ( 1 ) {
-#      print "<code>\$requri:   $requri</code><br/>\n";
-#     print "<code>\$navpath:     $navpath</code><br/>\n";
-#     print "<code>\$siteroot:    $siteroot</code><br/>\n";
-#     print "<code>\$pageuri:     $pageuri</code><br/>\n";
-#     print "<code>\$linkuri:     $linkuri</code><br/>\n";
-#     print "<code>\$reluri:      $reluri</code><br/>\n";
-#     print "<code>\$pagesect:    $pagesect</code><br/>\n";
-#     print "<code>\$linksecturi: $linksecturi</code><br/>\n";
+   if ( $debug > 3 ) {
+     print "<code>\$requri:   $requri</code><br/>\n";
+    print "<code>\$navpath:     $navpath</code><br/>\n";
+    print "<code>\$siteroot:    $siteroot</code><br/>\n";
+    print "<code>\$pageuri:     $pageuri</code><br/>\n";
+    print "<code>\$linkuri:     $linkuri</code><br/>\n";
+    print "<code>\$reluri:      $reluri</code><br/>\n";
+    print "<code>\$pagesect:    $pagesect</code><br/>\n";
+    print "<code>\$linksecturi: $linksecturi</code><br/>\n";
 
-#      print "<br/>";
-#      print "<code>Title: $navElem->{Title}</code><br/>\n";
-#      print "<code>Path:  $navElem->{Path}</code><br/>\n";
-#      print "<code>Order: $navElem->{Order}</code><br/>\n";
-#      print "<code>Submenu: $navElem->{Submenu}</code><br/>\n";
-#    }
+     print "<br/>";
+     print "<code>Title: $navElem->{Title}</code><br/>\n";
+     print "<code>Path:  $navElem->{Path}</code><br/>\n";
+     print "<code>Order: $navElem->{Order}</code><br/>\n";
+     print "<code>Submenu: $navElem->{Submenu}</code><br/>\n";
+   }
 
 
     # Actually create the list item and link.
