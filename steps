@@ -22,11 +22,53 @@ Department of Mathematics.
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
    USA
-   
+
+
+Use:
+
+   <& steps &>
+
+will insert a pair of links for moving through pages.  The order of
+and pages to include is determined by reading a file called
+steporder in the same directory as the autohandler calling this
+component.
+
+The steporder file uses YAML, and has the following format:
+
+   ---
+   - first directory
+   - second directory
+   - ...
+   - n directory
+
+Additional Arguments:
+
+You can use the Addclass to specify CSS classes other than the
+default nextprev class to customize the appearance of a particular
+instance of a next-prev step pair.
+
+The NextName and PrevName arguments can be used to specify
+alternative names for the links.
+
+For example,
+
+   <& /steps, Addclass=>'toplinks', NextName=>'Next Page',
+   PrevName=>'Previous Page' &>
+
+will create links like 
+
+<p class="nextprev topsteps">
+<a class="prev" href="./">Previous Page<abbr title="Projects in 1973&#8211;1974"></abbr></a>
+<a class="next" href="../1974/"><abbr title="Projects in 1974&#8211;1975">Next Page</abbr></a></p>
+
+If not specified, NextName defaults to Next, and PrevName defaults
+to Prev.
+
+
 </%doc>
-
-
-
+\
+\
+\
 %# <p>
 %# <code>
 %# % print "\$callingdir   = $callingdir <br/>"; 
@@ -47,27 +89,38 @@ Department of Mathematics.
 %# % print "\$siteroot     = $siteroot <br/>"; 
 %# </code>
 %# </p>
-
+\
 %# <p><% join ", ", @steps %></p>
-
+\
 % unless ( ( ! $nextlink eq "/" ) and ( ! $prevlink eq "/" ) ) {
-<p class="nextprev">
+<p class="nextprev\
+% if ( <% $args{Addclass} %> ) {
+ <% $args{Addclass} %>\
+% }
+">
 %   unless ( $prevlink eq "/" ) {
-<a class="prev" href="<% $prevlink %>"><abbr title="<% $prevtitle %>"><% $plink %></abbr></a>
+<a class="prev" href="<% $prevlink %>"><abbr title="<% $prevtitle %>"><% $args{PrevName} %></abbr></a>
 %#   print " | " if ( ! $nextlink eq "" );
 %   }
 %   unless ( $nextlink eq "/" ) {
-<a class="next" href="<% $nextlink %>"><abbr title="<% $nexttitle %>"><% $nlink %></abbr></a></p>
+<a class="next" href="<% $nextlink %>"><abbr title="<% $nexttitle %>"><% $args{NextName} %></abbr></a></p>
 %   }
 % }
 <%init>
 our ( $siteroot );
 
+### Handle arguments.
+
+my @arguments = @_;
+my %args = @arguments;
+
+$args{Addclass} = "" unless ( $args{Addclass} );
+$args{NextName} = "Next" unless $args{NextName};
+$args{PrevName} = "Prev" unless $args{PrevName};
+
+
 my $debug = 0;
 my $stepordername = "steporder";
-
-my $plink = "Previous";
-my $nlink = "Next";
 
 my $callingpage = $m->request_comp->path;
 my $callingdir  = $m->request_comp->dir_path;
@@ -116,6 +169,7 @@ if ( defined $match_idx ) {
     $prev = $steps[$match_idx - 1];
   } else {
     $prev = $steps[0];
+    $args{PrevName} = "";
   }
 
 
@@ -124,7 +178,7 @@ if ( defined $match_idx ) {
   } else {
     # Out of steps; go back to the start.
     $next = $steps[0];
-    $nlink = "Back to Start";
+    $args{NextName} = "Back to Start";
   }
 } else {
   # not found, do something else
