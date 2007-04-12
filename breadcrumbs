@@ -34,7 +34,7 @@ rendered page.
 
 The list is formatted as
 
-   <ul id="breadcrumbs">
+   <ul class="breadcrumbs">
    <li class="first"><a href="http://www.my.domain/">Home</a></li>
    <li><a href="http://www.my.domain/topdir/">Top Dir Title</a></li>
    <li><a href="http://www.my.domain/topdir/subdir1/">Subdir Title</a></li>
@@ -133,7 +133,7 @@ while ( @dirs  ) {
 }
 
 ### Actually output the breadcrumb list.
-print "<ul id=\"breadcrumbs\">\n";
+print "<ul class=\"breadcrumbs\">\n";
 
 while ( @crumbtrail ) {
   print ( pop @crumbtrail );
