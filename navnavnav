@@ -20,7 +20,41 @@ Copyright (C) 2007 Claire Connelly
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
    USA
 
-More docs to come.
+
+Usage:
+
+   Call as
+
+      <& /navnavnav &>
+
+Produces a unordered list (<ul>) containing list items (<li>) with
+links correspponding to the links specified in navigation hint files
+in each directory.
+
+The current page is indicated by not creating a link and adding the
+string
+
+   class="thispagelink"
+
+to the opening <li> tag.  It can be used to style the item to match
+the surrounding links or to style it to indicate that it is the
+current page.
+
+By adding the argument "main" to the component call, as in
+
+   <& /navnavnav, 'main' &>
+
+this component will only examine the navigation file at the top of
+the hierarchy.
+
+TODO:
+
+It would probably be good to tag the opening and closing list items
+in some way, to aid styling with CSS.
+
+It should be possible to tag the list item/link corresponding to the
+top-level section so it can be styled to indicate that fact.
+
 </%doc>
 %# <p style="z-index: 300;">
 %# <code
@@ -33,6 +67,12 @@ More docs to come.
 use Data::Dumper;
 our $debug = 0;
 
+### Grab any arguments we may have been passed for later processing.
+my ( $main_nav ) = shift;
+
+if ( $debug ) {
+  print "<p><code>\$main_nav was $main_nav</code></p>\n";
+}
 
 ### Grab some information about our working environment.
 our ($webhostname, $pageuri, $siteroot, $requri, $pagesect, $sitebase);
@@ -40,8 +80,15 @@ our $requesttime;
 our $lastdirpath;
 our $lastrequesttime;
 
-# Figure out the directory path to the page being rendered.
-my $dirpath   = $m->request_comp->dir_path;
+### Figure out the directory path to the page being rendered.
+my $dirpath;
+if ( $main_nav =~ m{main}i ) {
+  ## Master navigation block; only use navigation from the top of
+  ## the hierarchy.
+  $dirpath = "/";
+} else {
+  $dirpath   = $m->request_comp->dir_path;
+}
 print "<code>\$dirpath is $dirpath</code><br/>\n" if ( $debug );
 
 my $path   = $m->request_comp->path;
@@ -50,6 +97,8 @@ print "<code>\$path is $path</code><br/>\n" if ( $debug );
 
 ### Navigation hints file.
 my $navsrc = "navigation";
+
+### Get a list of directories to search for navigation files.
 
 # Turn something like "/clinic/projects" into ("", "clinic", "projects").
 my @dirs = split "/", $dirpath;
@@ -103,9 +152,10 @@ while ( @dirs ) {
     }
 
     if (defined $navinfo) {
-    	# We aren't the first time through, we already have data from somewhere
-    	# deeper in the hierarchy  e.g., we just did
-    	# "/clinic/projects/navigation" and now we're doing "/clinic/navigation"
+    	# We aren't the first time through, we already have data
+    	# from somewhere deeper in the hierarchy e.g., we just did
+    	# "/clinic/projects/navigation" and now we're doing
+    	# "/clinic/navigation"
         unless ( defined $thislevel->{$lastlevel} ) {
             warn "Expected to find an entry for $lastlevel in $navfile";
         }
@@ -159,17 +209,17 @@ sub print_menus ($) {
     my $linksecturi = $linkuri;
     $linksecturi    =~ s|(http://.*/).*\.html$|$1|;
     $pageuri    =~ s|(http://.*/).*\.html$|$1|;
-    
+
 
    if ( $debug > 3 ) {
      print "<code>\$requri:   $requri</code><br/>\n";
-    print "<code>\$navpath:     $navpath</code><br/>\n";
-    print "<code>\$siteroot:    $siteroot</code><br/>\n";
-    print "<code>\$pageuri:     $pageuri</code><br/>\n";
-    print "<code>\$linkuri:     $linkuri</code><br/>\n";
-    print "<code>\$reluri:      $reluri</code><br/>\n";
-    print "<code>\$pagesect:    $pagesect</code><br/>\n";
-    print "<code>\$linksecturi: $linksecturi</code><br/>\n";
+     print "<code>\$navpath:     $navpath</code><br/>\n";
+     print "<code>\$siteroot:    $siteroot</code><br/>\n";
+     print "<code>\$pageuri:     $pageuri</code><br/>\n";
+     print "<code>\$linkuri:     $linkuri</code><br/>\n";
+     print "<code>\$reluri:      $reluri</code><br/>\n";
+     print "<code>\$pagesect:    $pagesect</code><br/>\n";
+     print "<code>\$linksecturi: $linksecturi</code><br/>\n";
 
      print "<br/>";
      print "<code>Title: $navElem->{Title}</code><br/>\n";
