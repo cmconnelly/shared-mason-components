@@ -153,27 +153,140 @@ image{TmpAlt} = <% $image{TmpAlt} %><br />
 % } # End of debug if
 <%init>
 ### Output debugging information?
-my $debug = 0;
+my $debug = 3;
 
+### Import some information from the current page.
 our ($webhostname, $pageuri, $siteroot, $imageroot, $imagedir, $imagelinkbase);
 
-my $imagepath;
+## Name of image database files.
+my $IMAGEDB = "images.yaml";
+
+### Set up some default values for the image hash we will be using
+### to generate our output.
 my %image = (
 	     Filename => "/dev/null",
 #	     Alt      => "[mystery image]",
 	     Border   => 0,
 	    );
 
-my %imagedb = eval ( $m->scomp('image.db') );
 
+my $imagepath;
+
+### Import the image database.
+
+## Old-skool -- we expect the database file to be Perl code and eval
+## it.
+#  my %imagedb = eval ( $m->scomp('image.db') );
+
+### New school: Look through the directory hierarchy for appropriate
+### image databases.
+
+## Hashref for master image database.
+our $imagedb;
+
+## Figure out the directory path for our calling component.
+my $dirpath = $m->request_comp->dir_path;
+
+## Cache results to allow reuse of calculated database if called
+## within a short period of time since the previous call.
+
+our $CACHE_TIME = 5;		# Set to 5 seconds.
+
+## Set some variables we can check for the lifetime of this page's
+## processing.
+our $requesttime;
+our $lastdirpath;
+our $lastrequesttime;
+
+print "Last request at $lastrequesttime <br />\n" if (defined $lastrequesttime and $debug >= 1);
+print "This request at $requesttime <br />\n" if $debug >= 1;
+
+## Load the image database files.  Note that we only run this
+## routine if we
+# if ( ! defined $lastdirpath	# Have never run
+#     or $lastdirpath ne $dirpath	# Are starting from a different location
+#     or $lastrequesttime + $CACHE_TIME < $requesttime ) # Cache hasn't expired
+#   {
+#     $lastdirpath = $dirpath;
+#     $lastrequesttime = $requesttime;
+    print "\n<br />Loading $IMAGEDB for $dirpath\n<br />\n" if $debug >= 1;
+
+    print "REQ: ", $m->request_comp->dir_path, "\n<br />" if $debug;
+
+
+    ### Identify glossaries to load.
+
+    ## Get a list of directories to look through.
+    my @dirs = split ('/', $m->request_comp->dir_path );
+    push @dirs, '' unless @dirs;
+
+    print "\@dirs = (", join(", ", @dirs), ")\n<br />" if ( $debug >= 1 );
+
+    ## Assemble a list of available image databases in the hierarchy.
+    my @image_dbs;
+
+    while (@dirs) {
+	## Assemble a full path from the list of directories to scan.
+	my $path = join('/', @dirs );
+	print "\$path is $path\n" if ( $debug >= 1 );
+
+	## Check to see if an image database exists for that path.
+	my $idbtest = "$path/$IMAGEDB";
+	print "\n<br/> checking '$idbtest'<br/>" if ( $debug >= 2 );
+
+	## If we find a database, add it to the list.
+	if ( $m->comp_exists($idbtest) ) {
+	    print " -- found!" if ( $debug >= 2 );
+	    push ( @image_dbs, $idbtest );
+	}
+	## Throw away the last directory component.
+	pop @dirs;
+    }
+
+    print "\n<br />\n\@image_dbs = (", join(", ", @image_dbs), ")<br />\n" if ( $debug >= 1 );
+
+
+    ### Load the contents of the found image database.
+
+    ## Start from the top of the directory tree (the most general)
+    ## and moving down through the tree to the image database
+    ## closest to the requesting page.  This method gives us the
+    ## equivalent of ``cascading image databases'' -- entries in
+    ## image databases closer to a requesting object can override
+    ## those from higher up, thus allowing the same image keys to be
+    ## defined differently for different parts of a site.
+
+    while ( @image_dbs ) {
+	my $imagedbpath = pop @image_dbs;
+	print "<br />loading $imagedb<br />\n" if ( $debug >= 1 );
+
+	# Slurp in the contents of the image database file as a
+	# string.
+	my $imagedata = $m->scomp($imagedbpath);
+
+	# Skip this one if the file is empty.
+	next if ( $imagedata =~ m/^\s*\z/ );
+
+        # Construct a hash from the data in the string.
+        $imagedb = YAML::Load ( $imagedata );
+    }
+
+# } else {
+#     print "\n<br />Reusing loaded image database for $dirpath\n<br />\n" if $debug >= 1;
+# }
+
+### Deal with the image we're being called on.
+
+### Parse component arguments.
 my @arguments = @_;
 
-# The first argument is the name of the image
+## The first argument is the name of the image
 my $imagename = shift @arguments;
 
-# Any other arguments should be parameters -- we'll merge them into
-# our %image hash.
-my $imagedb_entry = $imagedb{$imagename};
+## Any other arguments should be parameters -- we'll merge them into
+## our %image hash.
+my $imagedb_entry = $imagedb->{$imagename};
+
 if ( defined $imagedb_entry ) {
   %image = (%image, %$imagedb_entry, @arguments);
   my $imagefile = $image{Filename};
