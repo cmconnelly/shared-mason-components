@@ -21,48 +21,58 @@ Copyright (C) 2007 Claire Connelly
    USA
 
 
-Usage:
+Usage
 
-   Call as
+The component is called as
 
       <& /navnavnav &>
 
-Produces a unordered list (<ul>) containing list items (<li>) with
-links correspponding to the links specified in navigation hint files
-in each directory.
+You will generally want to enclose it in a <div></div> pair to aide
+in CSS styling.
 
-The current page is indicated by not creating a link and adding the
-string
+The result is an unordered list (<ul>) containing list items (<li>)
+with links correspponding to the links specified in navigation hint
+files in each directory.  Links for subdirectories are enclosed
+within the <li> corresponding to the link that corresponds to the
+enclosing directory.  Those links are given the CSS class section,
+which can be used for adjusting appearance via CSS.
 
-   class="thispagelink"
+List items corresponding to the calling page do not include links;
+instead they are labelled with the CSS class thispagelink, which can
+be used to adjust its appearance to fit in with or stand out from
+the surrounding links.
 
-to the opening <li> tag.  It can be used to style the item to match
-the surrounding links or to style it to indicate that it is the
-current page.
 
-By adding the argument "main" to the component call, as in
+Arguments
+
+Without any arguments, the result will not include links from the
+top level of the site.  Combined with the use of the argument "main"
+in a separate component call, as in
 
    <& /navnavnav, 'main' &>
 
-this component will only examine the navigation file at the top of
-the hierarchy.
+you can easily generate sitewide and sectional navigation from the
+same navigation hints.
 
-TODO:
+With the main argument, this component will only examine (and
+produce links for) the navigation file at the top of the hierarchy.
+
+By adding the argument "full" to the component call, as in
+
+   <& /navnavnav, 'full' &>
+
+this component will generate menus that include the top-most level.
+
+
+TODO
 
 It would probably be good to tag the opening and closing list items
 in some way, to aid styling with CSS.
 
-It should be possible to tag the list item/link corresponding to the
-top-level section so it can be styled to indicate that fact.
-
 </%doc>
-%# <p style="z-index: 300;">
-%# <code
-%# %# @dirs = <% @dirs %><br />
-%# %# $path = <% $path %>
-%# </code>
-%# </p>
+%# ------------------------------------------------------------
 % print_menus ($navinfo);
+%# ------------------------------------------------------------
 <%init>
 use Data::Dumper;
 our $debug = 0;
@@ -103,38 +113,53 @@ my $navsrc = "navigation";
 # Turn something like "/clinic/projects" into ("", "clinic", "projects").
 my @dirs = split "/", $dirpath;
 
-my $navinfo;  # A reference to a hash with the combined nav data.
-              # "Build from the bottom up, not the top down" -- FDR.
-my $lastlevel; # The name of the most recent level we processed
+my $navinfo;   # A reference to a hash with the combined nav data.
+               # "Build from the bottom up, not the top down" -- FDR.
+my $lastlevel; # The name of the most recent level we processed.
 
-# Go through each of the dirs and look for a navigation file, i.e., look for
-#   "/clinic/projects/navigation", "/clinic/navigation", "/navigation"
-# (in that order).  Once we start finding navigation files, we build up
-# our hierarchy of navigation elements in $navinfo
+### Go through each of the dirs and look for a navigation file; that
+### is, look for "/clinic/projects/navigation",
+### "/clinic/navigation", "/navigation" (in that order).  Once we
+### start finding navigation files, we build up our hierarchy of
+### navigation elements in $navinfo.
 
-# Add a space to the end of the array in case it's empty (we're at
-# the root of the file system tree).
+### Add a space to the end of the array in case it's empty (we're at
+### the root of the file system tree).  Later we'll make that space
+### into a proper path.
 push @dirs, " ";
 
-
+### Data-gathering loop.
 while ( @dirs ) {
+    ## Assemble the working path for each directory in the hierarchy.
     my $workingpath = join ( '/', @dirs );
     $workingpath = "/" if ( $workingpath eq " " );
+
+    ## Add the navigation source filename to the path.
     my $navfile = "$workingpath/$navsrc";
-    unless ( $m->comp_exists ($navfile) ) {
-       # No navigation file; that's okay out at the leaves, but not okay
-       # after we find our first navigation file.
-       if ( defined $navinfo ) {
-           warn "Missing file $navfile;  may do wrong thing, who knows";
-       }
-       next;
+    if ( $debug > 5 ) {
+      print "<p><code>\$navfile = $navfile</code></p>\n";
     }
-    # Now we have a navigation file
+
+    unless ( $m->comp_exists ($navfile) ) {
+	## No navigation file; that's okay out at the leaves, but not
+	## okay after we find our first navigation file.
+	if ( defined $navinfo ) {
+	    warn "Missing file $navfile;  may do wrong thing, who knows";
+	}
+	next;
+    }
+
+    ### Now we have a navigation file to work with.
+
+    ## Suck in the contents of the file.
     my $navdata = $m->scomp($navfile);
     unless ( defined $navdata ) {
        warn "Couldn't load navdata file $navfile";
        next;
     }
+
+    ## Parse the file contents into a data structure using the YAML
+    ## module.
     my $thislevel = YAML::Load ( $navdata );
     unless ( defined $thislevel ) {
        warn "Couldn't load YAML data for $navfile";
@@ -147,15 +172,16 @@ while ( @dirs ) {
       print "\n</pre>\n";
     }
 
+    ## Substitute a complete path for each navigational item.
     foreach my $key ( keys %{ $thislevel } ) {
-      $thislevel->{$key}{Path} = $workingpath . "/" . $thislevel->{$key}{Path};
+      $thislevel->{$key}{Path} = $workingpath . '/' . $thislevel->{$key}{Path};
     }
 
     if (defined $navinfo) {
-    	# We aren't the first time through, we already have data
-    	# from somewhere deeper in the hierarchy e.g., we just did
-    	# "/clinic/projects/navigation" and now we're doing
-    	# "/clinic/navigation"
+    	## This run is not the first run; that is, we already have
+    	## data from somewhere deeper in the hierarchy.  For
+    	## example, we just processed "/clinic/projects/navigation"
+    	## and now we're processing "/clinic/navigation".
         unless ( defined $thislevel->{$lastlevel} ) {
             warn "Expected to find an entry for $lastlevel in $navfile";
         }
@@ -167,8 +193,8 @@ while ( @dirs ) {
         $navinfo = $thislevel;
     }
     # Move up the hierarchy, but remember where we just were
-} continue {
-    $lastlevel = pop @dirs;
+    } continue {
+      $lastlevel = pop @dirs; 
 }
 
 
@@ -181,34 +207,63 @@ if ( $debug > 3 ) {
 }
 
 
-### Define the routine for generating menus.
+### Define the routine for generating menus as a recursive function.
 sub print_menus ($);
 sub print_menus ($) {
   print "<ul>\n";
-  my ( $navElems ) = @_;  # A hash containing named navigational elements
+  my ( $navElems ) = @_;  # A hash containing named navigational elements.
 
   unless (ref $navElems eq 'HASH') {
     print "<pre>Passed ``$navElems'', not a hash ref</pre>";
     return;
   }
-  # print "<pre>Actually trying to work...</pre>";
+
+  ## We want the menus to appear in the order in which they were
+  ## defined to appear rather than in alphabetical order by key
+  ## (directory name), as that key may or may not correspond to the
+  ## ordering of the page titles or to any specific ordering that
+  ## the site maintainers might desire.
+
+  ## Ideally, we would keep the order the same as the order defined
+  ## by appearance in the navigation source files.  In the meantime,
+  ## as a bit of a hack, we specify an Order field in the navigation
+  ## files, and sort on that field here.
   my @order = sort {
     $navElems->{$a}{Order} <=> $navElems->{$b}{Order}
       or $navElems->{$a}{Title} cmp $navElems->{$b}{Title} }
     ( keys %$navElems );   # FIXME!  Arbitrary order!!!
 
+  if ( $debug > 5 ) {
+      print "<p><code>\@order = " . ( join ", ", @order ) . "</code></p>\n";
+  }
+
+  ### Now we use the ordered list to generate list items.
   foreach my $key ( @order ) {
     my $navElem = $navElems->{$key};
 
+    ## Full path to the menu item.
     my $navpath =  "/" . $sitebase . $navElem->{Path};
+
+    ## Clean up any doubled slashes.
     $navpath    =~ s|//|/|g;
 
+    ## Calculate a full and relative URI for the item.
     my $linkuri     = URI->new_abs($navpath, $siteroot);
     my $reluri      = $linkuri->rel($pageuri);
 
+    ## Calculate a URL to the item's section.
     my $linksecturi = $linkuri;
     $linksecturi    =~ s|(http://.*/).*\.html$|$1|;
-    $pageuri    =~ s|(http://.*/).*\.html$|$1|;
+
+    ## Chop off any html file to get a URI for the page.
+    $pageuri        =~ s|(http://.*/).*\.html$|$1|;
+
+    ## Check to see if the link we're creating contains the current page.
+    my $li_classes;
+    if ( $pageuri =~ m/$linksecturi/ ) {
+	$li_classes = "section";
+    }
+
 
 
    if ( $debug > 3 ) {
@@ -228,27 +283,53 @@ sub print_menus ($) {
      print "<code>Submenu: $navElem->{Submenu}</code><br/>\n";
    }
 
+    ### Only include the top level of links if requested.
+#    if ( ! $main_nav =~ m{full}i ) {
+	if ( $navElem->{Path} =~ m{^/\w+/$} ) {
+	    next unless ( $navElem->{Submenu} );
+	}
+#    }
 
     # Actually create the list item and link.
     print "<li";
 
     # Don't create links for the current page.
     if ( URI::eq ( $pageuri, $linkuri ) ) {
-      print " class=\"thispagelink\">$navElem->{Title}";
-    } else {
-      # But do create links for other pages.
-      print ">";
-      print "<a href=\"";
-      print $reluri;
-      print "\">$navElem->{Title}</a>";
+	$li_classes = "thispagelink";
     }
-    # print "<pre>Key is $key</pre>\n";
 
+    # Add any defined classes.
+    if ( $li_classes ) {
+	print " class=\"$li_classes\"";
+    }
+
+    # Close the opening <li> tag.
+    print ">";
+
+    ## Create links for menu items that don't point to the current
+    ## page.
+    if ( ! URI::eq ( $pageuri, $linkuri ) ) {
+      print "<a href=\"$reluri\">";
+    }
+
+    # Print the content of the list item/link.
+    print "$navElem->{Title}";
+
+    ## Close the link, if we're creating one.
+    if ( ! URI::eq ( $pageuri, $linkuri ) ) {
+	print "</a>";
+    }
+
+    ## Before we add the closing </li> tag, check for the existence
+    ## of a submenu; if there is one, recursively call this routine
+    ## to fill in that information.
     my $submenu = $navElem->{Submenu};
     if ( defined $submenu ) {
       print "\n";
       print_menus $submenu;
     }
+
+    ## Now close the </li> tag.
     print "</li>\n";
   }
   print "</ul>\n";
