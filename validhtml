@@ -53,22 +53,25 @@ $dtdver
 ### Output debugging information?
 my $debug = 0;
 
-### Figure out the hostname.
-my $hostname = $r->server->server_hostname;
+our ( $siteroot, $pagepath, $pageuri, $hostname );
 
-### Get the URI of this page from Apache.
-my $requri = $r->uri;
 
-### And Mason's conception of the path.
-my $pagepath = $m->request_comp->path;
-$pagepath =~ s|^/||;
-
-### So our site's root is...
-my $siteroot = "http://$hostname$requri";
-$siteroot =~ s#\Q$pagepath\E##;
-
-### Create an absolute URI object for this page.
-my $pageuri = URI->new_abs($pagepath, $siteroot);
+###### ### Figure out the hostname.
+###### my $hostname = $r->server->server_hostname;
+###### 
+###### ### Get the URI of this page from Apache.
+###### my $requri = $r->uri;
+###### 
+###### ### And Mason's conception of the path.
+###### my $pagepath = $m->request_comp->path;
+###### $pagepath =~ s|^/||;
+###### 
+###### ### So our site's root is...
+###### my $siteroot = "http://$hostname$requri";
+###### $siteroot =~ s#\Q$pagepath\E##;
+###### 
+###### ### Create an absolute URI object for this page.
+###### my $pageuri = URI->new_abs($pagepath, $siteroot);
 
 my $validatoruri = 'http://validator.w3.org/check?uri=';
 $validatoruri   .= 'http://www.math.hmc.edu/computing/';
