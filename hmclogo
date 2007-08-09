@@ -58,23 +58,25 @@ siteroot       = <% $siteroot %>
 # Output debugging information?
 my $debug = 0;
 
-### Figure out the hostname.
-my $hostname = $r->server->server_hostname;
+our ( $siteroot, $pagepath, $pageuri, $hostname );
 
-### Get the URI of this page from Apache.
-my $requri = $r->uri;
-
-### And Mason's conception of the path.
-my $pagepath = $m->request_comp->path;
-$pagepath =~ s|^/||;
-
-### So our site's root is...
-my $siteroot = "http://$hostname$requri";
-$siteroot =~ s#\Q$pagepath\E##;
+##### ### Figure out the hostname.
+##### my $hostname = $r->server->server_hostname;
+##### 
+##### ### Get the URI of this page from Apache.
+##### my $requri = $r->uri;
+##### 
+##### ### And Mason's conception of the path.
+##### my $pagepath = $m->request_comp->path;
+##### $pagepath =~ s|^/||;
+##### 
+##### ### So our site's root is...
+##### my $siteroot = "http://$hostname$requri";
+##### $siteroot =~ s#\Q$pagepath\E##;
 
 my $alttext      = "Harvey Mudd College Mathematics Computing";
 my $homeuri      = URI->new_abs('index.html', $siteroot);
-my $pageuri      = URI->new_abs($pagepath, $siteroot);
+##### my $pageuri      = URI->new_abs($pagepath, $siteroot);
 my $homelink     = $homeuri->rel($pageuri);
 $homelink        =~ s/index\.html//;
 my $imageroot    = $siteroot . "images/";
