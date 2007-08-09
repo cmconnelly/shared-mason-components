@@ -3,7 +3,7 @@
 $Id$
 
 img HTML::Mason component
-Copyright (C) 2000 - 2003 Claire Connelly
+Copyright (C) 2000 - 2003, 2007 Claire Connelly
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -20,19 +20,35 @@ Copyright (C) 2000 - 2003 Claire Connelly
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
    USA
 
+
 This component generates <img> tags for images that are listed in a
-file called /images.db.  It can also make those images links if the
-necessary information is provided in the site's /glossary file.
+file called images.yaml.  It can also make those images into links if
+the necessary information is provided in a glossary file.
 
 In its most basic form, the component is called as
 
    <& /img, 'imagename' &>
 
-which generates a basic <img> tag.
+which generates a basic <img/> tag containing a src and alt
+attribute.  These values are based on the values in the images.yaml
+database, but can be overridden in the component call.
+
+
+Attributes
 
 By providing additional arguments, you can specify attributes for the
 tag or cause the component to generate a link around the <img> tag.
-The supported arguments are
+
+We support all the attributes listed in the W3C's HTML 4.01
+standards document, available from <http://www.w3.org/TR/xhtml1/#ref-html4>.
+
+Note that according to the XHTML 1.0 document,
+<http://www.w3.org/TR/xhtml1/>, the name attribute is deprecated in
+favor of the id attribute.  This component currently supports both
+attributes; in the future, it may produce warnings or drop support
+for the name attribute.  The complete list (less src and alt) is
+stored in the @ATTRIBUTES list in the code; a subset of the most
+frequently used attributes is
 
    Align        the align attribute
    Alt          the alt attribute
@@ -41,10 +57,18 @@ The supported arguments are
    Height       the height attribute
    Hspace       the hspace attribute
    Longdesc     the longdesc (long description) attribute
-   URL          a URL to use as a link
+   Style        the style attribute
    Valign       the valign attribute
    Vspace       the vspace attribute
    Width        the width attribute
+
+
+Note that these attributes are supplied by calling them with a
+leading capital.  They are translated to the correct, lowercase,
+form during processing.
+
+
+The alt Attribute
 
 The alt attribute is required -- calls to the img component without an
 alt attribute will result in an error message appearing in the
@@ -53,85 +77,95 @@ images.db file, it should include the information for an alt tag.
 Specifying attributes in the component call overrides any information
 in the database.
 
-Similarly, the URL argument generally comes from the glossary entry
-specified using the Gloss argument, as in
+
+Specifying Links
+
+Two additional attribute-like arguments, Gloss and Url, allow you to
+insert images that function as hyperlinks.  They are used as
 
    <& /img, 'image', Gloss=>'glossary' &>
+   <& /img, 'image', Url=>'http://www.math.hmc.edu/' &>
+
+and will create an <a></a> tag pair linking to the URL specified by
+the Url argument or to the glossary entry whose key is ``glossary''
+surrounding an <img/> tag corresponding to the image whose key is
+``image''.
 
 
+Format of images.yaml Database Files
 
-Format of image.db File
+The database files for this component are formatted using YAML list
+syntax, a simplified data formatting markup syntax.  By convention,
+they are called images.yaml, but that value can be changed by
+editing the component to change the value of the $IMAGEDB variable.
 
-The image.db file is read in and evaluated as a Perl hash-of-hashes.
-It must begin and end with parentheses.  Each entry key points to a
-hash containing, at minimum, the complete filename of the image (not
-including the path, which is assumed to be /images) and an appropriate
-alt text describing the image.  Each entry is delimited by commas.  A
-minimal image.db file might be
+A minimal entry for a given image in the database file consists of a
+key, used to refer to the image in component calls, and two
+additional (required) arguments, Filename and Alt, as in
 
-   (
-      "foo" => {
-	 Filename => "foo.png",
-	 Alt      => "foos in love",
-      },
-   )
+   foo:
+     Filename: foo.png
+     Alt: foos in love
 
-Called with
+The Filename field is assumed to be the full name (with extension)
+of an image file stored in an images directory in the same directory
+as the image database.  *** Note, at this writing, all images must
+be stored in the images directory at the root of the web tree. ***
+
+The Alt field is a short but meaningful description of the content
+of the image, used to provide the content for the alt attribute that
+is required by the current HTML standards.  Providing good alt
+content also helps the site pass accessibility checks, so it would
+be a good idea even if it weren't required.
+
+
+Examples
+
+Given our example from the format section, an img component call
+such as
 
    <& /img, 'foo' &>
 
-in a top-level page and assuming that the foo.png image was 50 pixels
-by 75 pixels, the component would produce an <img> tag such as
+on a top-level page would produce an <img> tag such as
 
    <img src="images/foo.png" height="50" width="75" alt="foos in love" />
 
+Notice the height and width values, which are obtained by examining
+the image file if they were not supplied in the component call
+(using Image::Size).
 
-The img component was inspired by the img command in Userland Frontier
-and my modifications to it and to the glossSub command.
+The path to the image is generated based on the location of the
+calling page and the location of the directory (using the URI
+module).
+
+Examples with a glossary call or URL would look like
+
+   <& /img, 'foo', Gloss=>'DearFoo' &>
+   <& /img, 'foo', Url=>'http://www.foo.bar/' &>
+
+and produce code similar to
+
+   <a href="../foo/"><img src="images/foo.png" height="50"
+    width="75" alt="foos in love" /></a>
+   <a href="http://www.foo.bar/"><img src="images/foo.png"
+    height="50" width="75" alt="foos in love" /></a>
+
+assuming that the DearFoo glossary entry linked to a page in a
+directory parallel to that of the calling page.
+
+
+Inspiration and Thanks
+
+The img component was inspired by the img command provided by
+Userland Software in their Frontier scripting/CMS tool and my
+modifications to it and to the glossSub command.
 
 </%doc>
-
-% if ( defined $image{URL} ) {
-<a href="<% $image{URL} %>">\
-% }
-<img src="<% $image{Filename} %>"\
-% if (defined $image{Class} ) {
- class="<% $image{Class} %>"\
-% }
-% if ( defined $image{Height} ) {
- height="<% $image{Height} %>"\
-% }
-% if ( defined $image{Width} ) {
- width="<% $image{Width} %>"\
-% }
-% if (defined $image{Align} ) {
- align="<% $image{Align} %>"\
-% }
-% if (defined $image{Valign} ) {
- valign="<% $image{Valign} %>"\
-% }
-% if (defined $image{Hspace} ) {
- hspace="<% $image{Hspace} %>"\
-% }
-% if (defined $image{Vspace} ) {
- vspace="<% $image{Vspace} %>"\
-% }
-% if (defined $image{Border} ) {
- border="<% $image{Border} %>"\
-% }
-% if (defined $image{Longdesc} ) {
- longdesc="<% $image{Longdesc} %>"\
-% }
-% if (defined $image{Title} ) {
- title="<% $image{Title} %>"\
-% }
-%# The alt attribute is required
- alt="<% $image{Alt} %>"\
-%# Close the img tag (make it XML-compliant)
- />\
-% if ( defined $image{URL} ) {
-</a>\
-% }
+%### ------------------------------------------------------------
+%### Output.
+%### ------------------------------------------------------------
+<% $result %>
+%### ------------------------------------------------------------
 % if ( $debug ) {
 <p><code>
 siteroot = <% $siteroot %><br />
@@ -145,7 +179,7 @@ image{Height} = <% $image{Height} %><br />
 image{Alt} = <% $image{Alt} %><br />
 image{Text} = <% $image{Text} %><br />
 image{TmpAlt} = <% $image{TmpAlt} %><br />
- 
+
 % foreach my $foo (sort keys (%image)) {
 <% $foo %>=><% $image{$foo} %><br />
 % }
@@ -153,7 +187,7 @@ image{TmpAlt} = <% $image{TmpAlt} %><br />
 % } # End of debug if
 <%init>
 ### Output debugging information?
-my $debug = 3;
+my $debug = 0;
 
 ### Import some information from the current page.
 our ($webhostname, $pageuri, $siteroot, $imageroot, $imagedir, $imagelinkbase);
@@ -173,13 +207,6 @@ my %image = (
 my $imagepath;
 
 ### Import the image database.
-
-## Old-skool -- we expect the database file to be Perl code and eval
-## it.
-#  my %imagedb = eval ( $m->scomp('image.db') );
-
-### New school: Look through the directory hierarchy for appropriate
-### image databases.
 
 ## Hashref for master image database.
 our $imagedb;
@@ -202,10 +229,10 @@ print "Last request at $lastrequesttime <br />\n" if (defined $lastrequesttime a
 print "This request at $requesttime <br />\n" if $debug >= 1;
 
 ## Load the image database files.  Note that we only run this
-## routine if we
-# if ( ! defined $lastdirpath	# Have never run
-#     or $lastdirpath ne $dirpath	# Are starting from a different location
-#     or $lastrequesttime + $CACHE_TIME < $requesttime ) # Cache hasn't expired
+## routine if we...
+# if ( ! defined $lastdirpath	     # ...Have never run
+#     or $lastdirpath ne $dirpath    # ...Are starting from a different location
+#     or $lastrequesttime + $CACHE_TIME < $requesttime ) # ...Cache hasn't expired
 #   {
 #     $lastdirpath = $dirpath;
 #     $lastrequesttime = $requesttime;
@@ -214,7 +241,7 @@ print "This request at $requesttime <br />\n" if $debug >= 1;
     print "REQ: ", $m->request_comp->dir_path, "\n<br />" if $debug;
 
 
-    ### Identify glossaries to load.
+    ### Find image databases to load.
 
     ## Get a list of directories to look through.
     my @dirs = split ('/', $m->request_comp->dir_path );
@@ -246,7 +273,7 @@ print "This request at $requesttime <br />\n" if $debug >= 1;
     print "\n<br />\n\@image_dbs = (", join(", ", @image_dbs), ")<br />\n" if ( $debug >= 1 );
 
 
-    ### Load the contents of the found image database.
+    ### Load the contents of discovered image databases.
 
     ## Start from the top of the directory tree (the most general)
     ## and moving down through the tree to the image database
@@ -270,10 +297,11 @@ print "This request at $requesttime <br />\n" if $debug >= 1;
         # Construct a hash from the data in the string.
         $imagedb = YAML::Load ( $imagedata );
     }
-
+# cache code still commented while testing
 # } else {
 #     print "\n<br />Reusing loaded image database for $dirpath\n<br />\n" if $debug >= 1;
 # }
+
 
 ### Deal with the image we're being called on.
 
@@ -285,51 +313,119 @@ my $imagename = shift @arguments;
 
 ## Any other arguments should be parameters -- we'll merge them into
 ## our %image hash.
+
+## Create a hashref to refer to the entry corresponding to the
+## requested image.
 my $imagedb_entry = $imagedb->{$imagename};
 
 if ( defined $imagedb_entry ) {
-  %image = (%image, %$imagedb_entry, @arguments);
-  my $imagefile = $image{Filename};
-  $image{Filename} = $imagelinkbase . $imagefile;
+    ## Add the contents of the entry from the image database to our
+    ## %image hash, overwriting any values supplied by default.
+    %image = (%image, %$imagedb_entry, @arguments);
 
-# We need the $imagepath on the local file system to be able to get
-# the dimensions of the image
-  $imagepath = "$imagedir/images/" . $imagefile;
-  my ( $width, $height ) = ( Image::Size::imgsize($imagepath) );
-  $image{Width} = $width unless defined $image{Width};
-  $image{Height} = $height unless defined $image{Height};
+    ## Get the name of the image file from the %image hash.
+    my $imagefile = $image{Filename};
 
- if ( defined $image{Gloss}) {
-   # If we have a Gloss parameter, we should look to see if there's a
-   # glossary entry
-   my $glossentry = $image{Gloss};
-   my %glossary = eval ( $m->file('glossary') );
-   my $glossary_entry = $glossary{$glossentry};
+    ## Now overwrite that value with a new value containing a
+    ## complete path.  Note that this code is not compatible with
+    ## support for multiple image directories scattered throughout
+    ## the filesystem and will have to be changed.
+    $image{Filename} = $imagelinkbase . $imagefile;
 
-   if ( defined $glossary_entry ) {
-     %image = ( %image, %$glossary_entry );
-     if ( ! defined $image{Alt} ) {
-       $image{Alt} = $image{Text};
-     }
-  }
-}
+    # We need the $imagepath on the local file system to be able to
+    # get the dimensions of the image.  More hardcoded paths that
+    # will have to be addressed to support multiple image
+    # directories.
+    $imagepath = "$imagedir/images/" . $imagefile;
 
-  if ( ( ! defined $image{Alt} ) || ( $image{Alt} eq "" ) ) {
-    $image{Alt} = "[mystery image]";
-    } 
+    ## Obtain the width and height of the image and populate the
+    ## %image hash with that information.
+    my ( $width, $height ) = ( Image::Size::imgsize($imagepath) );
 
-if ( ! defined $image{Title} ) {
-   $image{Title} = $image{Alt};
-}
+    ## Now add these to our %image hash unless we were given a value
+    ## when called.
+    $image{Width}          = $width  unless defined $image{Width};
+    $image{Height}         = $height unless defined $image{Height};
 
-  if ( defined $image{ORURL} ) {
-    $image{URL} = $image{ORURL};
-  } elsif ( ( defined $image{URL} ) && ( $image{URL} !~ m/^http:/ ) ) {
-    $image{URL} = $image{URL};
-    my $linkuri = URI->new_abs($image{URL}, $siteroot);
-    $image{URL} = $linkuri->rel($pageuri);
-  }
+    ## Supply a default value for the alt attribute.  We should
+    ## probably throw an error here instead, as the alt attribute is
+    ## required by the current standards.
+    if ( ( ! defined $image{Alt} ) || ( $image{Alt} eq "" ) ) {
+	$image{Alt} = "[mystery image]";
+    }
+
+    ## Populate the title attribute using the value of the alt
+    ## attribute if no title was supplied.
+    if ( ! defined $image{Title} ) {
+	$image{Title} = $image{Alt};
+    }
+
+    ## Populate the URL field in the %image hash.
+    ## If both Url and Gloss are defined, throw an error.
+
+    if ( defined $image{Url} && $image{Gloss} ) {
+	print "<p class=\".error\">Both Url and Gloss cannot be defined.</p>\n";
+	exit 1;
+    } elsif ( defined $image{Url} ) {
+	if ( $image{Url} !~ m/^http:/ ) {
+	    ## Looks to be an internal link.  Get a relative link
+	    ## from this page, and replace the %image hash field
+	    ## with that link.
+	    my $linkuri = URI->new_abs($image{Url}, $siteroot);
+	    $image{Url} = $linkuri->rel($pageuri);
+	}
+    }
 } else {
-  print "<p class=\"error\">No such image, $imagename.</p>\n";
+    ### We have a problem, output an error in the page.
+    print "<p class=\"error\">No such image, $imagename.</p>\n";
 }
+
+### Define a list of known and supported attributes.
+
+## We are not including two required attributes for the img element,
+## src and alt, as we handle those specifically.
+my @ATTRIBUTES = qw(
+    Align    Id          Onkeypress   Onmouseup
+    Border   Ismap       Onkeyup      Style
+    Class    Lang        Onmousedown  Title
+    Dir      Onclick     Onmousemove  Usemap
+    Height   Ondblclick  Onmouseout   Vspace
+    Hspace   Onkeydown   Onmouseover  Width
+);
+
+
+### Construct the image element.
+
+## Open the tag.  The src attribute is required.
+my $image_tag = "<img src=\"$image{Filename}\"";
+
+## Add supplied attributes from approved attribute list.  Note that
+## any arguments that are not in the list are dropped silently.
+foreach my $attribute ( @ATTRIBUTES ) {
+    if ( defined $image{$attribute} ) {
+        $image_tag .= " \l$attribute=\"$image{$attribute}\"";
+    }
+}
+
+## The alt attribute is required.
+$image_tag .= " alt=\"$image{Alt}\"";
+
+## Close the img tag (make it XML-compliant)
+$image_tag .= "/>";
+
+### Add links from Url field or expand any glossary calls and return
+### final result.
+my $result = $image_tag;
+
+if ( defined $image{Url} ) {
+    ## Use the supplied URL.
+    $result = "<a href=\"$image{Url}\">$result</a>";
+} elsif ( defined $image{Gloss} ) {
+    ## We have a glossary entry request.  Use it.
+    my $glosskey = $image{Gloss};
+
+    ## Obtain a link from the gr component.
+    $result = $m->scomp('/gr', $glosskey, $image_tag);
+}
+
 </%init>
