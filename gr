@@ -3,7 +3,7 @@
 $Id$
 
 gr HTML::Mason component
-Copyright (C) 2000 - 2003 Claire Connelly
+Copyright (C) 2000 - 2003, 2007 Claire Connelly
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -20,6 +20,8 @@ Copyright (C) 2000 - 2003 Claire Connelly
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
    USA
 
+Introduction
+
 This component provides a glossary command for producing links or
 boilerplate text in other components.
 
@@ -28,6 +30,7 @@ between one and three fields, URL, Explanation, and Text.  If a
 glossary call is made to a nonexistent entry, or if the entry name is
 misspelled in the call, the component generates an error message that
 will appear in its place in the rendered page.
+
 
 Format of glossary File
 
@@ -89,6 +92,9 @@ The gr component is based on the idea of a similar command provided by
 Userland Frontier.
 
 </%doc>
+%### ------------------------------------------------------------
+%### Output.
+%### ------------------------------------------------------------
 <% $result %>\
 %#<a href="<% $link{URL} %>"><% $link{Text} %></a>\
 %# if ( $link{Text} =~ m/not defined/ ) {
@@ -114,6 +120,7 @@ URL            = <% $link{URL} %><br />
 result         = <% $result |h %><br />
 </code><br />
 % } # <- end of debug if
+%### ------------------------------------------------------------
 <%init>
 
 ### Output debugging information?
@@ -132,27 +139,32 @@ if ( defined $linktext ) {
 }
 
 ### By default, we'll define the values for the Text and URL keys.
-my %link = (Text => 'ERROR',
-            URL => '',
+my %link = (
+            Text => 'ERROR',
+            URL  => '',
            );
 
-### Now load the glossary file(s).
+### Now load the glossary file(s) or use a cached copy.
 
-our $times;
-print "<br />Run number ", ++$times, "<br />\n" if $debug >= 1;
+## Keep track of glossary runs.
+our $runs;
+print "<br />Run number ", ++$runs, "<br />\n" if $debug >= 1;
 
-# Define our (master) glossary hash.
+## Define our (master) glossary hash.
 our %glossary;
 
-# Glossary files will be called glossary.
-my $glossname = "glossary";
+## Glossary files will be called glossary.
+my $GLOSSNAME = "glossary";
 
-# Figure out the directory path to the requested component.
+## Cache time set to 5 seconds.
+my $CACHE_TIME   = 5;
+
+## Figure out the directory path to the requested component.
 my $dirpath   = $m->request_comp->dir_path;
 
-# If we're being called within a short period of time (5 seconds),
-# we'll use a cached copy of the glossary file rather than
-# reload them from disk each time.
+## If we're being called within a short period of time (5 seconds),
+## we'll use a cached copy of the glossary file rather than
+## reload them from disk each time.
 
 our $requesttime;
 our $lastdirpath;
@@ -163,7 +175,7 @@ print "This request at $requesttime <br />\n" if $debug >= 1;
 
 if ( ! defined $lastdirpath
     or $lastdirpath ne $dirpath
-    or $lastrequesttime + 5 < $requesttime ) {
+    or $lastrequesttime + $CACHE_TIME < $requesttime ) {
     $lastdirpath = $dirpath;
     $lastrequesttime = $requesttime;
     print "\n<br />Loading glossary for $dirpath\n<br />\n" if $debug >= 1;
@@ -182,7 +194,7 @@ if ( ! defined $lastdirpath
     while (@dirs) {
 	my $path = join('/', @dirs );
 	print "\$path is $path\n" if ( $debug >= 1 );
-	my $glosstest = "$path/$glossname";
+	my $glosstest = "$path/$GLOSSNAME";
 	print "\n<br/> checking '$glosstest'" if ( $debug >= 2 );
 	if ( $m->comp_exists($glosstest) ) {
 	    print " -- found!" if ( $debug >= 2 );
@@ -231,8 +243,13 @@ if ( ! defined $lastdirpath
 
 ### Now that we have the full glossary loaded, pull out the entry for
 ### the glossentry provided in the component call.
-
 my $glossary_entry = $glossary{$glossentry};
+
+#stupid-emacs# "
+
+
+
+### Produce the code for the link.
 
 my $linkuri;
 my $linkrel;
@@ -243,32 +260,45 @@ my $result;
 if ( defined $glossary_entry ) {
     %link = ( %link, %$glossary_entry);
     if ( $link{URL} ne "" ) { # There's a URL
-      $result='<a href="';
-      $workinglink = $link{URL};
-      if ( $workinglink =~ m#^/# ) {
-        # This is a local (intersite) link, so we want it relative
-        $workinglink =~ s|^/||;
-        my $fullink = $siteroot . $workinglink;
-        $linkuri = URI->new_abs($fullink, $siteroot);
-        $linkrel = $linkuri->rel($pageuri);
-        $link{URL} = $linkrel;
-      }
-      $result .= $link{URL};
-      $result .= '">';
-    }
+	## Opening <a> tag.
+	$result      .= '<a href="';
+	$workinglink  = $link{URL};
+	if ( $workinglink =~ m#^/# ) {
+	    ## This is a local (intersite) link, so we want it relative
+	    $workinglink =~ s|^/||;
+	    my $fullink = $siteroot . $workinglink;
+	    $linkuri    = URI->new_abs($fullink, $siteroot);
+	    $linkrel    = $linkuri->rel($pageuri);
+	    ## Replace the URL field with the relative link.
+	    $link{URL}  = $linkrel;
+	}
+	$result .= $link{URL};
+	$result .= '">';
+    }				# End of opening <a> tag.
+
+    ## Tag enclosure(s).
     if ( $linktext ne "" ) {
-      $link{Text} = $linktext;
-    } else {
-      if ( ( $link{Explanation} ) and ( $expflag ) ) {
-        $link{Text} = '<abbr title="' . $link{Explanation} . '">' . $link{Text} . '</abbr>';
-      }
+	## Use supplied linktext if available.
+	$link{Text} = $linktext;
     }
+
+    ## If we have an Explanation field and it's not suppressed, add
+    ## a set of <abbr></abbr> tags around the content of the
+    ## $link{Text} field.
+    if ( ( $link{Explanation} ) and ( $expflag ) ) {
+	$link{Text} = '<abbr title="' . $link{Explanation} . '">' . $link{Text} . '</abbr>';
+    }
+
+    ## Output the link text.
     $result .= $link{Text};
-      if ( $link{URL} ne "" ) {
-    $result .= '</a>';
+
+    ## Close <a> tag, if there is one.
+    if ( $link{URL} ne "" ) {
+	## Closing tag.
+	$result .= '</a>';
     }
-} else {                        # Glossary entry doesn't exist
-    #    print "Nope, not defined\n";
+} else {
+    ## Requested glossary entry doesn't exist in the database.
     $result = '<span class="error">Glossary entry >>';
     $result .= $glossentry;
     $result .= "<< doesn't exist!</span>";
