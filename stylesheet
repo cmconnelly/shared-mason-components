@@ -42,7 +42,7 @@ the site.
 %# Debugging code:
 % print "<!--\n";
 % print "hostname       = $hostname\n";
-% print "requri         = $requri\n";
+%# print "requri         = $requri\n";
 % print "siteroot       = $siteroot\n";
 % print "pagepath       = $pagepath\n";
 % print "pageuri        = $pageuri\n";
@@ -60,25 +60,27 @@ my $media      = "screen";
 $media         = $args{Media} if ( $args{Media} );
    
 
+our ( $siteroot, $pagepath, $pageuri, $hostname );
+
 ### Output debugging information?
 my $debug = 0;
 
-### Figure out the hostname.
-my $hostname = $r->server->server_hostname;
-
-### Get the URI of this page from Apache.
-my $requri = $r->uri;
-
-### And Mason's conception of the path.
-my $pagepath = $m->request_comp->path;
-$pagepath =~ s|^/||;
-
-### So our site's root is...
-my $siteroot = "http://$hostname$requri";
-$siteroot =~ s#\Q$pagepath\E##;
+##### ### Figure out the hostname.
+##### my $hostname = $r->server->server_hostname;
+##### 
+##### ### Get the URI of this page from Apache.
+##### my $requri = $r->uri;
+##### 
+##### ### And Mason's conception of the path.
+##### my $pagepath = $m->request_comp->path;
+##### $pagepath =~ s|^/||;
+##### 
+##### ### So our site's root is...
+##### my $siteroot = "http://$hostname$requri";
+##### $siteroot =~ s#\Q$pagepath\E##;
 
 ### Create an absolute URI object for this page.
-my $pageuri = URI->new_abs($pagepath, $siteroot);
+##### my $pageuri = URI->new_abs($pagepath, $siteroot);
 
 
 my $csspath    =  'stylesheets/' . $stylesheet . '.css';
