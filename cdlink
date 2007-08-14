@@ -1,0 +1,125 @@
+<%doc>
+cdlink -- Create links to course descriptions for HMC courses.
+
+$Id$
+
+Use as
+
+   <& /cdlink, 'chem105' &>
+   <& /cdlink, 'math11' &>
+
+</%doc>
+%### ------------------------------------------------------------
+%### Output
+%### ------------------------------------------------------------
+% if ( $debug ) {
+%#--- <br />
+%#--- <code>
+%#--- hostname       = <% $webhostname %><br />
+%#--- siteroot       = <% $siteroot %><br />
+%#--- pageuri        = <% $pageuri %><br />
+%#--- %my $dirpath    = $m->request_comp->dir_path;
+%#--- dirpath        = <% $dirpath %><br />
+%#--- <br />
+%#--- %#workinglink    = <% $workinglink %><br />
+%#--- linkuri        = <% $linkuri %><br />
+%#--- linkrel        = <% $linkrel %><br />
+%#--- linktext       = <% $linktext %><br />
+%#--- %#Text           = <% $link{Text} %><br />
+%#--- %#URL            = <% $link{URL} %><br />
+%#--- %#result         = <% $result |h %><br />
+%#--- </code><br />
+% }
+<a href="<% $linkrel %>"><% $linktext %></a>\
+%### ------------------------------------------------------------
+%### initial code section
+%### ------------------------------------------------------------
+<%init>
+### Output debugging information?
+my $debug = 0;
+
+
+### Import some information from the calling page.
+our ($webhostname, $pageuri, $siteroot);
+
+### Departmental information.
+my $dept_info;
+
+### Import the datafile that specifies basic information about the
+### location and naming of course descriptions for different
+### departments.
+
+## Define basename for YAML-formatted data file.
+my $DEPT_COURSEINFO_FILE = "/cd-defaults.yaml";
+
+## Suck the data into a string.
+if ( $m->comp_exists($DEPT_COURSEINFO_FILE) ) {
+    my $deptcourseinfo = $m->scomp($DEPT_COURSEINFO_FILE);
+    $dept_info = YAML::Load( $deptcourseinfo );
+} else {
+    ## Die.  No data, we can't do anything useful.
+    die "Departmental course datafile $DEPT_COURSEINFO_FILE not found";
+}
+
+### Parse the call to figure out which department and course we need
+### to generate a link for.
+my ( $requested_course, $linktext ) = @_;
+
+## Parse out the department and course number.
+$requested_course    =~ m/^([a-z]+)([0-9a-zA-Z]+)/;
+my ( $dept, $course ) = ( $1, $2 );
+
+## Get some defaults from the departmental data.
+my $department_name = $dept_info->{$dept}->{Dept};
+my $base_url        = $dept_info->{$dept}->{BaseURL};
+my $cd_path         = $dept_info->{$dept}->{Path};
+my $label           = $dept_info->{$dept}->{Label};
+
+
+### Put together the link to the course description.
+my $link   = $base_url . $cd_path;
+
+### Remove any doubled slashes.
+$link     =~ s{//}{/}g;
+
+### Special cases for different departments.
+if ( $dept =~ m/chem/ ) {
+    ## Chemistry has a separate page for each class.
+    $link .= $course . ".html";
+} elsif ( $dept =~ m/phys/ ) {
+    ## Physics uses a PHP script and requires the course number to
+    ## be padded out to three digits.
+    $link .= sprintf '%03u', $course;
+} else {
+    ## Courses are located via id or name attributes on the page.
+    $link .= "#$dept$course";
+}
+
+### Now calculate a relative link (for internal links, link will be
+### relative; for external links, link will be complete).
+my $linkuri = URI->new_abs($link, $siteroot);
+my $linkrel = $linkuri->rel($pageuri);
+
+
+### If we weren't provided with a $linktext, put something useful in.
+if ( $linktext eq "" ) {
+    $linktext = "$department_name $course";
+}
+
+
+if ( $debug ) {
+    print "<code>\n";
+    print "\$dept is $dept<br/>";
+    print "\$course is $course<br/>\n";
+    print "\$department_name is $department_name<br/>\n";
+    print "\$base_url is $base_url<br/>\n";
+    print "\$cd_path is $cd_path<br/>\n";
+    print "\$link is $link<br/>\n";
+    print "\$linkrel is $linkrel<br/>\n";
+    if ( $linktext ) {
+	print "\$linktext is $linktext<br/>\n";
+    } 
+    print "</code>\n";
+}
+
+</%init>
