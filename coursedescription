@@ -1,0 +1,117 @@
+<%doc>
+
+$Id:$
+
+Copyright (C) 2007 Claire Connelly and the Department of
+                   Mathematics, Harvey Mudd College
+
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+   USA
+
+Usage:
+
+   <& coursedescription, 'math61' &>
+
+looks up and prints, with no formatting, the course description for
+Math 61.
+
+Optionally, one or two additional arguments may be supplied.  The
+second argument must be the name of one of the fields available from
+the course-descriptions database.  If the field is defined for the
+requested record, its contents will be produced.  If the field is
+not defined, the component will return an empty string or the
+contents of the optional third argument.
+
+</%doc>
+
+<%init>
+### Debug or not.
+my $debug = 0;
+
+### Import some useful variables from the calling page.
+our ( $webhostname, $pageuri, $siteroot );
+
+### Path to the course descriptions database file.
+my $COURSE_DESCRIPTIONS_FILE = "/program/courses/course-descriptions";
+
+### Parse arguments.
+my $class    = shift;
+$class       =~ s/math//;
+my $reqfield = shift || "Description";
+my $empty    = shift || '';
+
+if ( $debug ) {
+    print "<code>\$class is $class<br/>
+\$reqfield is $reqfield<br/>
+\$empty    is $empty</code><br/>\n";
+}
+
+### List of acceptable fields.
+my @fields   = qw(
+		   Number
+		   Title
+		   Description
+		   Instructors
+		   Prereqs
+		   Prerequisites
+		   PrerequisitesRecommended
+		   PrerequisitesOther
+		   Credits
+		   Offered
+		   Notes
+	      );
+
+
+### Verify that any requested field is valid.
+if ( $reqfield && ! grep ( m/$reqfield/, @fields ) ) {
+    print "<p class=\"error\">Error, field $reqfield not valid.</p>\n";
+}
+
+### Suck in the course-descriptions database.
+my $coursedata;
+if ( $m->comp_exists($COURSE_DESCRIPTIONS_FILE) ) {
+    my $data = ( $m->scomp($COURSE_DESCRIPTIONS_FILE) );
+    $coursedata = YAML::Load($data);
+}
+
+### Hashref to shorten referrals.
+my $course = $coursedata->{$class};
+
+
+### Produce some output.
+if ( $reqfield =~ m/Prereqs/ ) {
+    ### Prerequisites are a special case; we have a short name to
+    ### get all of them, with some notes.
+    if ( $course->{Prerequesites} ) {
+	print $course->{Prerequisites};
+    }
+
+    if ( $course->{PrerequisitesRecommended} ) {
+	print "Recommended: $course->{PrerequisitesRecommended}\n";
+    }
+
+    if ( $course->{PrerequisitesOther} ) {
+	print "Other: $course->{PrerequisitesOther}\n";
+    }
+} elsif ( $coursedata->{$class}->{$reqfield} ) {
+    ### Check to see if the field is defined; if so, print it.
+    print $coursedata->{$class}->{$reqfield};
+} else {
+    ### Field is undefined; return $empty.
+    print $empty;
+}
+</%init>
+
+
