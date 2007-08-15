@@ -41,6 +41,11 @@ The steporder file uses YAML, and has the following format:
    - ...
    - n directory
 
+(In case it's not clear, the format is a flat list, equivalent to
+
+   first directory, second directory, ... , n directory
+)
+
 Additional Arguments:
 
 You can use the Addclass to specify CSS classes other than the
@@ -55,141 +60,174 @@ For example,
    <& /steps, Addclass=>'toplinks', NextName=>'Next Page',
    PrevName=>'Previous Page' &>
 
-will create links like 
+will create links like
 
-<p class="nextprev topsteps">
-<a class="prev" href="./">Previous Page<abbr title="Projects in 1973&#8211;1974"></abbr></a>
-<a class="next" href="../1974/"><abbr title="Projects in 1974&#8211;1975">Next Page</abbr></a></p>
+   <p class="nextprev topsteps">
+   <a class="prev" href="./">Previous Page<abbr title="Projects in 1973&#8211;1974"></abbr></a>
+   <a class="next" href="../1974/"><abbr title="Projects in 1974&#8211;1975">Next Page</abbr></a></p>
 
 If not specified, NextName defaults to Next, and PrevName defaults
 to Prev.
 
 
 </%doc>
+% if ( $debug ) {
+<p>
+<code>
+% print "\$CALLINGDIR   = $CALLINGDIR <br/>"; 
+% print "\$steporderdir = $steporderdir <br/>"; 
+% print "\$curstep      = $curstep <br/>"; 
+% print ( join "<br/>" , @stepinfo );
+% print "\$prev         = $prev <br/>"; 
+% print "\$next         = $next <br/>"; 
+% print "\$curpath      = $curpath <br/>"; 
+% print "\$prevpath     = $prevpath <br/>"; 
+% print "\$nextpath     = $nextpath <br/>"; 
+% print "\$baseuri      = $baseuri <br/>"; 
+% print "\$cururi       = $cururi <br/>"; 
+% print "\$prevuri      = $prevuri <br/>"; 
+% print "\$nexturi      = $nexturi <br/>"; 
+% print "\$prevlink     = $prevlink <br/>"; 
+% print "\$nextlink     = $nextlink <br/>"; 
+% print "\$siteroot     = $siteroot <br/>"; 
+</code>
+</p>
+<p>Steps: <% join ", ", @$steplistref %></p>
+% }
 \
+%### ------------------------------------------------------------
+%### Output
+%### ------------------------------------------------------------
 \
-\
-%# <p>
-%# <code>
-%# % print "\$callingdir   = $callingdir <br/>"; 
-%# % print "\$steporderdir = $steporderdir <br/>"; 
-%# % print "\$curstep      = $curstep <br/>"; 
-%# % print ( join "<br/>" , @stepinfo );
-%# % print "\$prev         = $prev <br/>"; 
-%# % print "\$next         = $next <br/>"; 
-%# % print "\$curpath      = $curpath <br/>"; 
-%# % print "\$prevpath     = $prevpath <br/>"; 
-%# % print "\$nextpath     = $nextpath <br/>"; 
-%# % print "\$baseuri      = $baseuri <br/>"; 
-%# % print "\$cururi       = $cururi <br/>"; 
-%# % print "\$prevuri      = $prevuri <br/>"; 
-%# % print "\$nexturi      = $nexturi <br/>"; 
-%# % print "\$prevlink     = $prevlink <br/>"; 
-%# % print "\$nextlink     = $nextlink <br/>"; 
-%# % print "\$siteroot     = $siteroot <br/>"; 
-%# </code>
-%# </p>
-\
-%# <p><% join ", ", @steps %></p>
-\
-% unless ( ( ! $nextlink eq "/" ) and ( ! $prevlink eq "/" ) ) {
+% if ( $next eq $prev ) {
+%     ### Not a page in the list; skip it.
+%     print "<p>Not generating next/prevs</p>\n" if ( $debug > 1 );
+% } else {
+%### If both $nextlink and $prevlink are defined, then we generate
+%### code.
 <p class="nextprev\
-% if ( <% $args{Addclass} %> ) {
+%### If additional classes are defined, add them in.
+%     if ( <% $args{Addclass} %> ) {
+%# Note the leading space!
  <% $args{Addclass} %>\
-% }
+%     }
+%### Close the opening anchor tag.
 ">
-%   unless ( $prevlink eq "/" ) {
+%# ### If the $prevlink is useful, add it.
+%     unless ( $prevlink eq "/" ) {
 <a class="prev" href="<% $prevlink %>"><abbr title="<% $prevtitle %>"><% $args{PrevName} %></abbr></a>
-%#   print " | " if ( ! $nextlink eq "" );
-%   }
-%   unless ( $nextlink eq "/" ) {
+%     }
+%     unless ( $nextlink eq "/" ) {
 <a class="next" href="<% $nextlink %>"><abbr title="<% $nexttitle %>"><% $args{NextName} %></abbr></a></p>
-%   }
+%     }
 % }
+%### ------------------------------------------------------------
+%### Initial Code Section
+%### ------------------------------------------------------------
 <%init>
+### Debug if we want.
+my $debug = 0;
+
+### Import some variables from the calling component.
 our ( $siteroot );
 
 ### Handle arguments.
+my %args = @_;
 
-my @arguments = @_;
-my %args = @arguments;
-
-$args{Addclass} = "" unless ( $args{Addclass} );
+### Set some defaults unless overrides were specified in the
+### component call.
+$args{Addclass} = ""     unless $args{Addclass};
 $args{NextName} = "Next" unless $args{NextName};
 $args{PrevName} = "Prev" unless $args{PrevName};
 
+### Name of the file containing ordering information.
+my $STEP_ORDER_FILENAME = "steporder";
 
-my $debug = 0;
-my $stepordername = "steporder";
 
-my $callingpage = $m->request_comp->path;
-my $callingdir  = $m->request_comp->dir_path;
-
-my @dirs        = split ("/",  $callingdir);
-
+### Get a list of step ordering files in the hierarchy.
+my $CALLINGPAGE = $m->request_comp->path;
+my $CALLINGDIR  = $m->request_comp->dir_path;
+my @dirs        = split ("/",  $CALLINGDIR);
 my @stepinfo;
 
+## For each directory, check for the existence of a steporder file
+## and add it to the @stepinfo list if found.
 while (@dirs) {
-  my $path = join('/', @dirs );
-  print "\$path is $path\n" if ( $debug >= 1 );
-  my $stepordertest = "$path/$stepordername";
-  print "\n<br/> checking '$stepordertest'" if ( $debug >= 2 );
-  if ( $m->comp_exists($stepordertest) ) {
-    print " -- found!" if ( $debug >= 2 );
-    push ( @stepinfo, $path );
-    last;
-  }
-  pop @dirs;
+    my $path = join('/', @dirs );
+    print "\$path is $path\n" if ( $debug >= 1 );
+    my $stepordertest = "$path/$STEP_ORDER_FILENAME";
+    print "\n<br/> checking '$stepordertest'" if ( $debug >= 2 );
+    if ( $m->comp_exists($stepordertest) ) {
+	print " -- found!" if ( $debug >= 2 );
+	push ( @stepinfo, $path );
+	last;
+    }
+    ## Throw away the last directory component.
+    pop @dirs;
 }
 
+### Get the last directory from the list.
 my $steporderdir  = shift @stepinfo;
-my $steporderfile = $steporderdir . "/" . $stepordername;
 
-# Slurp in the contents of the glossary file as a string.
-my $stepref = YAML::Load ( $m->scomp($steporderfile) ) ;
-my @steps   = @{ $stepref }; 
+### Get the path to to the steporder file in this directory.
+my $steporderfile = $steporderdir . "/" . $STEP_ORDER_FILENAME;
 
-my $curstep =  $callingdir;
+### Slurp in the contents of the glossary file as a string.
+my $steplistref = YAML::Load ( $m->scomp($steporderfile) );
+my @steplist    = @{ $steplistref };
+
+my $curstep =  $CALLINGDIR;
 $curstep    =~ s|$steporderdir(/)?||g;
 
-### Figure our position in the list.
+### Figure out the position of the calling page in the list.
+
+## Crawl through the list, checking each member to see if it is the
+## same as the current step ($curstep); if it is, note the list
+## index in $match_idx and stop.  Not sure why we're doing things
+## this way.
 my ($i, $match_idx);
-for ($i = 0; $i < @steps; $i++ ) {
-  if ( $steps[$i] =~ m/$curstep/ ) {
-    $match_idx = $i;
-    last;
-  }
+for ($i = 0; $i < @steplist; $i++ ) {
+    if ( $steplist[$i] =~ m/$curstep/ ) {
+	$match_idx = $i;
+	last;
+    }
 }
 
+### Generate the next/prev links.
 my ( $prev, $next );
 
+### If we are on the current page...
 if ( defined $match_idx ) {
+    ## Set the previous link to be the previous item in the list.
+    if ( ( $match_idx - 1 ) >= 0 ) {
+	$prev = $steplist[$match_idx - 1];
+    } else {
+	## If there is no previous item, leave it blank.
+	$prev = $steplist[0];
+	$args{PrevName} = "";
+    }
 
-  if ( ( $match_idx - 1 ) >= 0 ) {
-    $prev = $steps[$match_idx - 1];
-  } else {
-    $prev = $steps[0];
-    $args{PrevName} = "";
-  }
-
-
-  if ( ( $match_idx + 1 ) < @steps ) {
-    $next = $steps[$match_idx + 1];
-  } else {
-    # Out of steps; go back to the start.
-    $next = $steps[0];
-    $args{NextName} = "Back to Start";
-  }
+    ## Set the next link to the next item in the list.
+    if ( ( $match_idx + 1 ) < @steplist ) {
+	$next = $steplist[$match_idx + 1];
+    } else {
+	## If there are no more items, create a link to the start of
+	## the list, and name it appropriately.
+	$next = $steplist[0];
+	$args{NextName} = "Back to Start";
+    }
 } else {
-  # not found, do something else
-  $next = $steps[1];
-  $prev = "";
+    ## There is no $match_idx, 
+    
+#    $next = $steplist[1];
+    $next = "";
+    $prev = "";
 }
 
 $siteroot    =~ s|/$||;
 
 my $baseuri  = URI->new_abs( $siteroot . $steporderdir, $siteroot );
-my $curpath  = $callingpage;
+my $curpath  = $CALLINGPAGE;
 my $prevpath = $steporderdir . "/" . $prev;
 my $nextpath = $steporderdir . "/" . $next;
 
@@ -206,25 +244,24 @@ my $previndex = $prevpath . '/index.html' if ( $prevpath !~ m/.html$/ );
 my $nextindex = $nextpath . '/index.html' if ( $nextpath !~ m/.html$/ );
 
 if ( $m->comp_exists($prevpath) ) {
-	my $prevcont = $m->fetch_comp($prevpath);
-	my $prevtitle = $prevcont->scall_method('title');
+    my $prevcont = $m->fetch_comp($prevpath);
+    my $prevtitle = $prevcont->scall_method('title');
 } elsif ( $m->comp_exists( $previndex ) ) {
-	my $prevcont = $m->fetch_comp($previndex);
-	$prevtitle = $prevcont->scall_method('title');
+    my $prevcont = $m->fetch_comp($previndex);
+    $prevtitle = $prevcont->scall_method('title');
 } else {
-#  print "Nope, can't find $prevpath or $previndex.\n";
+    #  print "Nope, can't find $prevpath or $previndex.\n";
 }
 
 if ( $m->comp_exists($nextpath) ) {
-	my $nextcont = $m->fetch_comp($nextpath);
-	my $nexttitle = $nextcont->scall_method('title');
+    my $nextcont = $m->fetch_comp($nextpath);
+    my $nexttitle = $nextcont->scall_method('title');
 } elsif ( $m->comp_exists( $nextindex ) ) {
-	my $nextcont = $m->fetch_comp($nextindex);
-	$nexttitle = $nextcont->scall_method('title');
+    my $nextcont = $m->fetch_comp($nextindex);
+    $nexttitle = $nextcont->scall_method('title');
 } else {
-#  print "Nope, can't find $nextpath or $nextindex.\n";
+    #  print "Nope, can't find $nextpath or $nextindex.\n";
 }
-
 
 
 </%init>
