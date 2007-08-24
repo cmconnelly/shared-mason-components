@@ -336,7 +336,7 @@ if ( defined $imagedb_entry ) {
     # get the dimensions of the image.  More hardcoded paths that
     # will have to be addressed to support multiple image
     # directories.
-    $imagepath = "$imagedir/images/" . $imagefile;
+    $imagepath = "$imagedir/" . $imagefile;
 
     ## Obtain the width and height of the image and populate the
     ## %image hash with that information.
