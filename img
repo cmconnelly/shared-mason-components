@@ -200,7 +200,7 @@ my $IMAGEDB = "images.yaml";
 my %image = (
 	     Filename => "/dev/null",
 #	     Alt      => "[mystery image]",
-	     Border   => 0,
+#	     Border   => 0,
 	    );
 
 
