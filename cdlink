@@ -55,7 +55,7 @@ Use as
 %### ------------------------------------------------------------
 <%init>
 ### Output debugging information?
-my $debug = 0;
+my $debug = 10;
 
 
 ### Import some information from the calling page.
@@ -96,10 +96,9 @@ my $label           = $dept_info->{$dept}->{Label};
 
 
 ### Put together the link to the course description.
-my $link   = $base_url . $cd_path;
-
-### Remove any doubled slashes.
-$link     =~ s{//}{/}g;
+my $link   =  $base_url;
+$link      =~ s{/$}{};		# Throw away last slash.
+$link      .= $cd_path;
 
 ### Special cases for different departments.
 if ( $dept =~ m/chem/ ) {
