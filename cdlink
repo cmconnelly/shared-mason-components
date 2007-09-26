@@ -55,7 +55,7 @@ Use as
 %### ------------------------------------------------------------
 <%init>
 ### Output debugging information?
-my $debug = 10;
+my $debug = 0;
 
 
 ### Import some information from the calling page.
