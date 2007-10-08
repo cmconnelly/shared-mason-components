@@ -57,12 +57,6 @@ same navigation hints.
 With the main argument, this component will only examine (and
 produce links for) the navigation file at the top of the hierarchy.
 
-By adding the argument "full" to the component call, as in
-
-   <& /navnavnav, 'full' &>
-
-this component will generate menus that include the top-most level.
-
 
 TODO
 
@@ -75,7 +69,7 @@ in some way, to aid styling with CSS.
 %# ------------------------------------------------------------
 <%init>
 use Data::Dumper;
-our $debug = 0;
+our $debug = 10;
 
 ### Grab any arguments we may have been passed for later processing.
 my ( $main_nav ) = shift;
@@ -284,11 +278,9 @@ sub print_menus ($) {
    }
 
     ### Only include the top level of links if requested.
-#    if ( ! $main_nav =~ m{full}i ) {
 	if ( $navElem->{Path} =~ m{^/\w+/$} ) {
 	    next unless ( $navElem->{Submenu} );
 	}
-#    }
 
     # Actually create the list item and link.
     print "<li";
