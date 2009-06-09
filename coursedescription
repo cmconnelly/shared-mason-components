@@ -95,16 +95,20 @@ if ( $reqfield =~ m/Prereqs/ ) {
     ### Prerequisites are a special case; we have a short name to
     ### get all of them, with some notes.
     if ( $course->{Prerequisites} ) {
-	print $course->{Prerequisites};
-    }
-
-    if ( $course->{PrerequisitesRecommended} ) {
-	print "Recommended: $course->{PrerequisitesRecommended}\n";
+	print "$course->{Prerequisites}";
     }
 
     if ( $course->{PrerequisitesOther} ) {
-	print "Other: $course->{PrerequisitesOther}\n";
+	print ", $course->{PrerequisitesOther}.\n";
+    } else {
+	print ".\n";
     }
+
+    if ( $course->{PrerequisitesRecommended} ) {
+	print "Recommended: $course->{PrerequisitesRecommended}, \n";
+    }
+
+
 } elsif ( $coursedata->{$class}->{$reqfield} ) {
     ### Check to see if the field is defined; if so, print it.
     print $coursedata->{$class}->{$reqfield};
