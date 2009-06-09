@@ -1,6 +1,6 @@
 <%doc>
 
-$Id:$
+$Id$
 
 Copyright (C) 2007 Claire Connelly and the Department of
                    Mathematics, Harvey Mudd College
@@ -94,7 +94,7 @@ my $course = $coursedata->{$class};
 if ( $reqfield =~ m/Prereqs/ ) {
     ### Prerequisites are a special case; we have a short name to
     ### get all of them, with some notes.
-    if ( $course->{Prerequesites} ) {
+    if ( $course->{Prerequisites} ) {
 	print $course->{Prerequisites};
     }
 
