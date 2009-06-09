@@ -92,21 +92,30 @@ my $course = $coursedata->{$class};
 
 ### Produce some output.
 if ( $reqfield =~ m/Prereqs/ ) {
+    my $prereqlist;
+
     ### Prerequisites are a special case; we have a short name to
     ### get all of them, with some notes.
     if ( $course->{Prerequisites} ) {
-	print "$course->{Prerequisites}";
+	$prereqlist .= "$course->{Prerequisites}";
     }
 
     if ( $course->{PrerequisitesOther} ) {
-	print ", $course->{PrerequisitesOther}.\n";
+	$prereqlist .= ", $course->{PrerequisitesOther}.\n";
     } else {
-	print ".\n";
+	$prereqlist .= ".\n";
     }
 
     if ( $course->{PrerequisitesRecommended} ) {
-	print "Recommended: $course->{PrerequisitesRecommended}, \n";
+	$prereqlist .= "Recommended: $course->{PrerequisitesRecommended}, \n";
     }
+
+    ### Replace compact prerequistite references with course names.
+    if ( $prereqlist =~ m{math[0-9]+} ) {
+	$prereqlist =~ s{math([0-9]+)}{Math $1}g;
+    }
+
+    print $prereqlist; 
 
 
 } elsif ( $coursedata->{$class}->{$reqfield} ) {
