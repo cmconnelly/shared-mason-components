@@ -35,7 +35,7 @@ not defined, the component will return an empty string or the
 contents of the optional third argument.
 
 </%doc>
-
+\
 <%init>
 ### Debug or not.
 my $debug = 0;
