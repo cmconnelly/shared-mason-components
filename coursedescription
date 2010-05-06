@@ -126,5 +126,3 @@ if ( $reqfield =~ m/Prereqs/ ) {
     print $empty;
 }
 </%init>
-
-
