@@ -63,7 +63,15 @@ produces
 
   <a href="/courses/descriptions/#math55">Mathematics 55 (Discrete Mathematics)</a>
 
-and
+but
+
+  <& /cdlink, 'math55', 'TitlePar' &>
+
+gives
+
+  <a href="/courses/descriptions/#math55">Discrete Mathematics (Mathematics 55)</a>
+
+and, finally,
 
   <& /cdlink, 'math55', 'TitleOnly' &>
 
@@ -166,17 +174,20 @@ my $linkrel = $linkuri->rel($pageuri);
 
 ### If the $linktext is one of our special key terms, add some other
 ### useful information to the linktext.
-my $course_title;
+
+my $course_id = "$department_name $course";
 
 if ($linktext =~ m{Title}) {
     if ($dept =~ m{math}) {	# Only fill in names for math classes.
-        $course_title = $m->scomp('/coursedescription', $requested_course, 'Title');
+        my $course_title = $m->scomp('/coursedescription', $requested_course, 'Title');
 	if ($linktext =~ m{ParTitle}) {
-	    $linktext = "$department_name $course ($course_title)";
+	    $linktext = "$course_id ($course_title)";
+	} elsif ($linktext =~ m{TitlePar}) {
+	    $linktext = "$course_title ($course_id)";
 	} elsif ($linktext =~ m{TitleOnly}) {
 	    $linktext = "$course_title";
 	} else {
-	    $linktext = "$department_name $course: $course_title";
+	    $linktext = "$course_id: $course_title";
 	}
     } else {
 	$linktext = "<span class=\"error\">title expansion not available</span>";
@@ -187,7 +198,7 @@ if ($linktext =~ m{Title}) {
 ### If we weren't provided with a $linktext, put something useful in.
 
 if ( $linktext eq "" ) {
-    $linktext = "$department_name $course";
+    $linktext = "$course_id";
 }
 
 
