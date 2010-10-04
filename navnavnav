@@ -3,7 +3,7 @@
 $Id: uparrowp 204 2003-10-30 20:58:07Z cmc $
 
 navnavnav HTML::Mason Navigation Component
-Copyright (C) 2007 Claire Connelly
+Copyright (C) 2007-2010 Claire Connelly
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -56,6 +56,41 @@ same navigation hints.
 
 With the main argument, this component will only examine (and
 produce links for) the navigation file at the top of the hierarchy.
+
+
+Navigation Hint Files
+
+Navigation hint files must be named ``navigation'' and should appear
+in each directory between the top-level and the last level for which
+you choose to provide navigation.
+
+A navigation file is a YAML document, so should start with three
+dashes and a carriage return.
+
+Each entry should appear in the form
+
+item-id:
+  Title: <Title for a Link>
+  Path: path for a link
+  Order: integer
+
+The item-id is used as the key for various manipulations; so
+must be unique within the page.
+
+The contents of the Title field will be used to create a link or
+menu item.  The Path field can contain a path from the top of the
+site (/path/from/top/), a path below this point in the directory
+structure (path/below/here/) or an HTML anchor reference
+(#anchor-on-current-page).
+
+The Order field can be used to force a particular sort order
+(otherwise the items are sorted alphabetically by the contents of
+the Title field.
+
+If the item-id contains the string ``divider'', rather than
+creating a link, a list item will be created containing an <hr/>
+tag with the CSS class navdivider.
+
 
 
 TODO
@@ -258,6 +293,8 @@ sub print_menus ($$) {
   foreach my $key ( @order ) {
     my $navElem = $navElems->{$key};
 
+    my $isdivider = 1 if ( $key =~ m{divider}i );
+
     ## Calculate a full and relative URI for the item.
     my $navpath = $navElem->{Path};
     my $linkuri;
@@ -336,15 +373,19 @@ sub print_menus ($$) {
 
     ## Create links for menu items that don't point to the current
     ## page.
-    if ( ! URI::eq ( $pageuri, $linkuri ) ) {
+    unless ( ( URI::eq ( $pageuri, $linkuri ) ) or ( $isdivider ) ) {
       print "<a href=\"$reluri\">";
     }
 
     # Print the content of the list item/link.
-    print "$navElem->{Title}";
+    if ( $isdivider )  {
+	print "<hr class=\"navdivider\"/>";
+    } else {
+	print "$navElem->{Title}";
+    }
 
     ## Close the link, if we're creating one.
-    if ( ! URI::eq ( $pageuri, $linkuri ) ) {
+    unless ( ( URI::eq ( $pageuri, $linkuri ) ) or ( $isdivider ) ) {
 	print "</a>";
     }
 
