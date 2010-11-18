@@ -154,13 +154,15 @@ $link      =~ s{/$}{};		# Throw away last slash.
 $link      .= $cd_path;
 
 ### Special cases for different departments.
-if ( $dept =~ m/chem/ ) {
-    ## Chemistry has a separate page for each class.
-    $link .= $course . ".html";
-} elsif ( $dept =~ m/phys/ ) {
-    ## Physics uses a PHP script and requires the course number to
+if ( $dept =~ m/bio|chem/ ) {
+    ## Biology & chemistry have unlabelled courses; just link to the page.
+} elsif ( $dept =~ m/phys|astr/ ) {
+    ## Physics (and astronomy) uses a PHP script and requires the course number to
     ## be padded out to three digits.
     $link .= sprintf '%03u', $course;
+} elsif ( $dept =~ m/engr/ ) {
+    ## Engineering has descriptions on a single page.
+    $link .= "\#$course";
 } else {
     ## Courses are located via id or name attributes on the page.
     $link .= "#$dept$course";
