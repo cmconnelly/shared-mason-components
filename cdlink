@@ -154,8 +154,8 @@ $link      =~ s{/$}{};		# Throw away last slash.
 $link      .= $cd_path;
 
 ### Special cases for different departments.
-if ( $dept =~ m/bio|chem/ ) {
-    ## Biology & chemistry have unlabelled courses; just link to the page.
+    ## Unlabelled courses; just link to the page.
+if ( $dept =~ m/bio|chem|cgu/ ) {
 } elsif ( $dept =~ m/phys|astr/ ) {
     ## Physics (and astronomy) uses a PHP script and requires the course number to
     ## be padded out to three digits.
