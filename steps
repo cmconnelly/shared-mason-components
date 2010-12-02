@@ -46,6 +46,14 @@ The steporder file uses YAML, and has the following format:
    first directory, second directory, ... , n directory
 )
 
+If you want subdirectories to form the steps, but still want a next
+link on the top level, the first item in your steporder file should be
+a single period; that is,
+
+   - .
+   - additional steps
+
+
 Additional Arguments:
 
 You can use the Addclass to specify CSS classes other than the
@@ -178,6 +186,9 @@ my @steplist    = @{ $steplistref };
 
 my $curstep =  $CALLINGDIR;
 $curstep    =~ s|$steporderdir(/)?||g;
+if ($curstep eq "") {
+    $curstep = ".";		# Current directory is top directory.
+}
 
 ### Figure out the position of the calling page in the list.
 
@@ -193,6 +204,7 @@ for ($i = 0; $i < @steplist; $i++ ) {
     }
 }
 
+
 ### Generate the next/prev links.
 my ( $prev, $next );
 
@@ -203,7 +215,8 @@ if ( defined $match_idx ) {
 	$prev = $steplist[$match_idx - 1];
     } else {
 	## If there is no previous item, leave it blank.
-	$prev = $steplist[0];
+	# $prev = $steplist[0];
+	$prev = "";
 	$args{PrevName} = "";
     }
 
