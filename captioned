@@ -35,8 +35,16 @@ where XXpx corresponds to the width of the included image, or the
 width specified in a Width attribute (which will also be passed to the
 img component).
 
+You may also specify Left=>'' or Right=>'' to add CSS code to the
+style attribute on the <p> tag to set the captioned image to float
+left or right, respectively.
+
+
+CSS Formatting
+
 You are expected to maintain CSS rules to style the image and caption
-appropriately; the following are a suggestion:
+appropriately; the following two rules are one possible way of
+formatting the image and caption.
 
    p.caption {
      font-size: 75%;
@@ -53,28 +61,26 @@ appropriately; the following are a suggestion:
    }
 
 
-Attributes
 
-By providing additional arguments, you can specify attributes for the
-tag(s) or cause the component to generate a link around the <img> tag.
-(Many of these arguments will be passed directly to the img component
--- see that component's documentation for the details.)
+Additional Attributes
+
+Additional attributes will be passed to the img component -- see that
+component's documentation for the details.
+
 
 </%doc>
 %### -----------------------------------------------------------------
 %### Output
 %### -----------------------------------------------------------------
 <% $result %>
-<pre>
-imgargs = <% $imgargs %>
-imagecode = <% $imagecode %>
-</pre>
+%#<pre>
+%#imgargs = <% $imgargs %>
+%#imagecode = <% $imagecode %>
+%#</pre>
 %### -----------------------------------------------------------------
 <%init>
-
-#our ($webhostname, $pageuri, $siteroot, $imageroot, $imagedir, $imagelinkbase);
-
 my $result;
+my $morestyle;
 
 ### Parse arguments.
 my @arguments = @_;
@@ -86,17 +92,27 @@ my $imagename = shift @arguments;
 my $caption = shift @arguments;
 $caption =~ s{\n}{ }g;
 
-## Remaining arguments should be passed to the the img component call.
+## Process remaining arguments.
 our %args = (@arguments);
-my $imgargs;
 
-foreach my $arg (sort (keys (%args))) {
-    $imgargs .= " $arg=>\'$args{$arg}\',";
+# Cherry pick a Left attribute to set style to force float to
+# the left; Right to the right.
+if ( defined $args{Left} ) {
+    $morestyle = "float: left;";
+    delete $args{Left};
+} elsif ( defined $args{Right} ) {
+    $morestyle = "float: right;";
+    delete $args{Right};
 }
 
-our $imagecode = $m->scomp('/img', $imagename, $imgargs);
+## Remaining arguments should be passed to the the img component call, which we need to do as a list.
+my @imgargs = ( '/img', $imagename );
 
+foreach my $arg ( sort ( keys(%args) ) ) {
+    push @imgargs, $arg, $args{$arg};
+}
 
+our $imagecode = $m->scomp(@imgargs);
 
 #sub get_imagewidth {return 244;}
 sub get_imagewidth {
@@ -117,17 +133,19 @@ $result .= "<p class=\"caption";
 # add additional classes
 $result .= "\"";
 
-# get the width of the image
+# Set the width of the paragraph to the width of the image.
 $result .= " style=\"width: ";
 $result .= get_imagewidth . "px";
 $result .= ";";
 # add additional styles
-# if () {
-# }
+if ( $morestyle ) {
+    $result .= " $morestyle";
+}
 $result .= "\"";
 $result .= ">";
+# Insert the image tag.
 $result .= "$imagecode";
-# add rest of arguments
+# Add the caption text.
 $result .= " $caption";
 $result .= "</p>\n";
 
