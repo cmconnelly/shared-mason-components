@@ -35,9 +35,10 @@ where XXpx corresponds to the width of the included image, or the
 width specified in a Width attribute (which will also be passed to the
 img component).
 
-You may also specify Left=>'' or Right=>'' to add CSS code to the
-style attribute on the <p> tag to set the captioned image to float
-left or right, respectively.
+You may also specify a Float attribute to add CSS code to the style
+attribute on the <p> tag to set the captioned image's position.  Use
+'left' to float left, 'right' to float right, 'none' to not float the
+image at all, and 'center' to center the image within its container.
 
 
 CSS Formatting
@@ -67,7 +68,7 @@ Additional Attributes
 Additional attributes will be passed to the img component -- see that
 component's documentation for the details.
 
-
+'
 </%doc>
 %### -----------------------------------------------------------------
 %### Output
@@ -97,12 +98,14 @@ our %args = (@arguments);
 
 # Cherry pick a Left attribute to set style to force float to
 # the left; Right to the right.
-if ( defined $args{Left} ) {
-    $morestyle = "float: left;";
-    delete $args{Left};
-} elsif ( defined $args{Right} ) {
-    $morestyle = "float: right;";
-    delete $args{Right};
+if ( defined $args{Float} ) {
+    $morestyle = "float: ";
+    if ( $args{Float} =~ m{center}i ) {
+	$morestyle .= "none; margin: 0 auto;";
+    } else {
+	$morestyle .= "\L$args{Float};";
+    }
+    delete $args{Float};
 }
 
 ## Remaining arguments should be passed to the the img component call, which we need to do as a list.
