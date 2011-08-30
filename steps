@@ -122,7 +122,10 @@ to Prev.
 %### Close the opening anchor tag.
 ">
 %# ### If the $prevlink is useful, add it.
-%     unless ( $prevlink eq "/" ) {
+% unless ( ( $prevlink eq "/" )	# links to top-level of site
+%     or ( $prev eq "" )	# is blank
+%     or ( $curstep eq "\." ) )	# at top and would link to self
+% {
 <a class="prev" href="<% $prevlink %>"><abbr title="<% $prevtitle %>"><% $args{PrevName} %></abbr></a>
 %     }
 %     unless ( $nextlink eq "/" ) {
