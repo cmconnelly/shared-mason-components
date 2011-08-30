@@ -231,7 +231,7 @@ if ( defined $match_idx ) {
     }
 } else {
     ## There is no $match_idx, 
-    
+
 #    $next = $steplist[1];
     $next = "";
     $prev = "";
