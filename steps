@@ -244,9 +244,17 @@ my $curpath  = $CALLINGPAGE;
 my $prevpath = $steporderdir . "/" . $prev;
 my $nextpath = $steporderdir . "/" . $next;
 
-my $prevuri = URI->new_abs( $siteroot . $prevpath . '/', $siteroot );
+if ( $prevpath !~ m{/$} ) {
+    $prevpath .= '/';
+}
+
+if ( $nextpath !~ m{/$} ) {
+    $nextpath .= '/';
+}
+
+my $prevuri = URI->new_abs( $siteroot . $prevpath, $siteroot );
 my $cururi  = URI->new_abs( $siteroot . $curpath,  $siteroot );
-my $nexturi = URI->new_abs( $siteroot . $nextpath . '/', $siteroot );
+my $nexturi = URI->new_abs( $siteroot . $nextpath, $siteroot );
 
 my $prevlink = $prevuri->rel($cururi);
 my $nextlink = $nexturi->rel($cururi);
