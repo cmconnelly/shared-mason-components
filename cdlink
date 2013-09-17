@@ -180,7 +180,7 @@ my $linkrel = $linkuri->rel($pageuri);
 my $course_id = "$department_name $course";
 
 if ($linktext =~ m{Title}) {
-    if ($dept =~ m{math}) {	# Only fill in names for math classes.
+    if ($dept =~ m{math|mcbi}) {	# Only fill in names for math classes.
         my $course_title = $m->scomp('/coursedescription', $requested_course, 'Title');
 	if ($linktext =~ m{ParTitle}) {
 	    $linktext = "$course_id ($course_title)";
