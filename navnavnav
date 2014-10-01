@@ -378,6 +378,11 @@ sub print_menus {
             {
                 push @li_classes, "section";
             }
+
+	    ## Add a class for a divider.
+	    if ( $isdivider ) {
+	       push @li_classes, "divider";
+	    }
         }
 
         if ( $debug > 3 ) {
