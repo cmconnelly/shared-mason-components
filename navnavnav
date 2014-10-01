@@ -1,9 +1,7 @@
 <%doc>
 
-$Id: uparrowp 204 2003-10-30 20:58:07Z cmc $
-
 navnavnav HTML::Mason Navigation Component
-Copyright (C) 2007-2010 Claire Connelly
+Copyright (C) 2007-2014 Claire Connelly
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -49,13 +47,28 @@ Without any arguments, the result will not include links from the
 top level of the site.  Combined with the use of the argument "main"
 in a separate component call, as in
 
-   <& /navnavnav, 'main' &>
+   <& /navnavnav, Main=>'1' &>
 
 you can easily generate sitewide and sectional navigation from the
 same navigation hints.
 
 With the main argument, this component will only examine (and
 produce links for) the navigation file at the top of the hierarchy.
+
+
+Additional Arguments
+
+The Id argument, as in
+
+   <& /navnavnav, Id=>'someid' &>
+
+will add an id attribute to the <ul> tag.
+
+The Classes argument, as in
+
+   <& /navnavnav, Classes=>'class1 class2' &>
+
+will add one or more classes to the class attribute of the <ul> tag.
 
 
 Navigation Hint Files
@@ -71,8 +84,11 @@ Each entry should appear in the form
 
 item-id:
   Title: <Title for a Link>
-  Path: path for a link
-  Order: integer
+  Path: path for a link (defaults to item-id/)
+  Component: a Mason component to include (via scomp)  [optional]
+  Id: an identifer for the id attribute                [optional]
+  Classes: one or more CSS classes to include          [optional]
+  Order: integer                                       [optional]
 
 The item-id is used as the key for various manipulations; so
 must be unique within the page.
@@ -81,7 +97,7 @@ The contents of the Title field will be used to create a link or
 menu item.  The Path field can contain a path from the top of the
 site (/path/from/top/), a path below this point in the directory
 structure (path/below/here/) or an HTML anchor reference
-(#anchor-on-current-page).
+(e.g., #anchor-on-this-page, someotherpage.html#anchor, adir/#anchor).
 
 The Order field can be used to force a particular sort order
 (otherwise the items are sorted alphabetically by the contents of
@@ -107,8 +123,16 @@ use Data::Dumper;
 our $debug = 0;
 
 ### Grab any arguments we may have been passed for later processing.
-my ( $main_nav ) = shift;
-my $is_main = $main_nav =~ m{main}i;
+my ( $main_nav, $is_main );
+our %args = @_;
+
+if ( defined $args{Main} ) {
+    $main_nav = $args{Main};
+}
+
+if ($main_nav eq "main" ) {
+    $is_main = 1;
+}
 
 ### Don't print nav elements beneath this level unless they are part of
 ### the hierarchy for this page.
@@ -116,31 +140,30 @@ my $nav_level = $main_nav ? 1 : 2;
 
 ### Are we rendering the main_nav part?
 
-
-if ( $debug ) {
-  print "<p><code>\$main_nav was $main_nav</code></p>\n";
+if ($debug) {
+    print "<p><code>\$main_nav was $main_nav</code></p>\n";
 }
 
 ### Grab some information about our working environment.
-our ($webhostname, $pageuri, $siteroot, $requri, $pagesect, $sitebase);
+our ( $webhostname, $pageuri, $siteroot, $requri, $pagesect, $sitebase );
 our $requesttime;
 our $lastdirpath;
 our $lastrequesttime;
 
 ### Figure out the directory path to the page being rendered.
 my $dirpath;
-if ( $is_main ) {
-  ## Master navigation block; only use navigation from the top of
-  ## the hierarchy.
-  $dirpath = "/";
-} else {
-  $dirpath   = $m->request_comp->dir_path;
+if ($is_main) {
+    ## Master navigation block; only use navigation from the top of
+    ## the hierarchy.
+    $dirpath = "/";
 }
-print "<code>\$dirpath is $dirpath</code><br/>\n" if ( $debug );
+else {
+    $dirpath = $m->request_comp->dir_path;
+}
+print "<code>\$dirpath is $dirpath</code><br/>\n" if ($debug);
 
-my $path   = $m->request_comp->path;
-print "<code>\$path is $path</code><br/>\n" if ( $debug );
-
+my $path = $m->request_comp->path;
+print "<code>\$path is $path</code><br/>\n" if ($debug);
 
 ### Navigation hints file.
 my $navsrc = "navigation";
@@ -150,9 +173,9 @@ my $navsrc = "navigation";
 # Turn something like "/clinic/projects" into ("", "clinic", "projects").
 my @dirs = split "/", $dirpath;
 
-my $navinfo;   # A reference to a hash with the combined nav data.
-               # "Build from the bottom up, not the top down" -- FDR.
-my $lastlevel; # The name of the most recent level we processed.
+my $navinfo;      # A reference to a hash with the combined nav data.
+                  # "Build from the bottom up, not the top down" -- FDR.
+my $lastlevel;    # The name of the most recent level we processed.
 
 ### Go through each of the dirs and look for a navigation file; that
 ### is, look for "/clinic/projects/navigation",
@@ -161,27 +184,27 @@ my $lastlevel; # The name of the most recent level we processed.
 ### navigation elements in $navinfo.
 
 ### If we're at the root of the tree, make the dirs equal to the empty string
-### so that we process this one directory. 
+### so that we process this one directory.
 push @dirs, "" if @dirs == 0;
 
 ### Data-gathering loop.
-while ( @dirs ) {
+while (@dirs) {
     ## Assemble the working path for each directory in the hierarchy.
-    my $workingpath = join ( '/', @dirs );
+    my $workingpath = join( '/', @dirs );
 
     ## Add the navigation source filename to the path.
     my $navfile = "$workingpath/$navsrc";
     if ( $debug > 5 ) {
-      print "<p><code>\$navfile = $navfile</code></p>\n";
+        print "<p><code>\$navfile = $navfile</code></p>\n";
     }
 
-    unless ( $m->comp_exists ($navfile) ) {
-	## No navigation file; that's okay out at the leaves, but not
-	## okay after we find our first navigation file.
-	if ( defined $navinfo ) {
-	    warn "Missing file $navfile;  may do wrong thing, who knows";
-	}
-	next;
+    unless ( $m->comp_exists($navfile) ) {
+        ## No navigation file; that's okay out at the leaves, but not
+        ## okay after we find our first navigation file.
+        if ( defined $navinfo ) {
+            warn "Missing file $navfile;  may do wrong thing, who knows";
+        }
+        next;
     }
 
     ### Now we have a navigation file to work with.
@@ -189,221 +212,294 @@ while ( @dirs ) {
     ## Suck in the contents of the file.
     my $navdata = $m->scomp($navfile);
     unless ( defined $navdata ) {
-       warn "Couldn't load navdata file $navfile";
-       next;
+        warn "Couldn't load navdata file $navfile";
+        next;
     }
 
     ## Parse the file contents into a data structure using the YAML
     ## module.
-    my $thislevel = YAML::Load ( $navdata );
+    my $thislevel = YAML::Load($navdata);
     unless ( defined $thislevel ) {
-       warn "Couldn't load YAML data for $navfile";
-       next;
+        warn "Couldn't load YAML data for $navfile";
+        next;
     }
 
     if ( $debug >= 3 ) {
-      print "<pre style=\"clear: both;\">\n";
-      local($Data::Dumper::Terse) = 1;
-      print "\$navinfo = ", Dumper( $navinfo );
-      print "parsed_yaml(\"$navfile\") = ", Dumper ( $thislevel );
-      print "\n</pre>\n";
+        print "<pre style=\"clear: both;\">\n";
+        local ($Data::Dumper::Terse) = 1;
+        print "\$navinfo = ",                 Dumper($navinfo);
+        print "parsed_yaml(\"$navfile\") = ", Dumper($thislevel);
+        print "\n</pre>\n";
     }
 
     ## Substitute a complete path for each navigational item.
-    foreach my $key ( keys %{ $thislevel } ) {
-      my $path = $thislevel->{$key}{Path};
-      if (!defined $path) {
-          $path = "$workingpath/$key/";
-      } elsif ($path =~ m{^http://}) {
-          # Leave it alone...
-      } elsif ($path =~ m{^/}) {
-          # Leave it alone...
-      } else {
-          $path = "$workingpath/$path";
-      }
-      $thislevel->{$key}{Path} = $path;
-      $thislevel->{$key}{Level} = @dirs;
+    foreach my $key ( keys %{$thislevel} ) {
+        my $path = $thislevel->{$key}{Path};
+        if ( !defined $path ) {
+            $path = "$workingpath/$key/";
+        }
+        elsif ( $path =~ m{^http://} ) {
+
+            # Leave it alone...
+        }
+        elsif ( $path =~ m{^/} ) {
+
+            # Leave it alone...
+        }
+        else {
+            $path = "$workingpath/$path";
+        }
+        $thislevel->{$key}{Path}  = $path;
+        $thislevel->{$key}{Level} = @dirs;
     }
 
-    if (defined $navinfo) {
-    	## This run is not the first run; that is, we already have
-    	## data from somewhere deeper in the hierarchy.  For
-    	## example, we just processed "/clinic/projects/navigation"
-    	## and now we're processing "/clinic/navigation".
+    if ( defined $navinfo ) {
+        ## This run is not the first run; that is, we already have
+        ## data from somewhere deeper in the hierarchy.  For
+        ## example, we just processed "/clinic/projects/navigation"
+        ## and now we're processing "/clinic/navigation".
         unless ( defined $thislevel->{$lastlevel} ) {
             warn "Expected to find an entry for $lastlevel in $navfile";
         }
         $thislevel->{$lastlevel}{Submenu} = $navinfo;
         $navinfo = $thislevel;
-    } else {
+    }
+    else {
         # This is the first time through, there is no preexisting navinfo to
         # to link in
         $navinfo = $thislevel;
     }
+
     # Move up the hierarchy, but remember where we just were
-} continue {
-      $lastlevel = pop @dirs; 
 }
-
-
+continue {
+    $lastlevel = pop @dirs;
+}
 
 ### Print out the entire data structure for the navigation hash.
 if ( $debug > 3 ) {
-  print "<pre style=\"clear: both;\">\n";
-  print "After processing...\n";
-  local($Data::Dumper::Terse) = 1;
-  print "\$navinfo = ", Dumper ( $navinfo );
-  print "\n</pre>\n";
+    print "<pre style=\"clear: both;\">\n";
+    print "After processing...\n";
+    local ($Data::Dumper::Terse) = 1;
+    print "\$navinfo = ", Dumper($navinfo);
+    print "\n</pre>\n";
 }
-
 
 ### Define the routine for generating menus as a recursive function.
-sub print_menus ($$);
-sub print_menus ($$) {
-  print "<ul>\n";
-  my ( $navElems, $min_level ) = @_;
-      # A hash containing named navigational elements, and the minimum level
-      # that we're prepared to always print at.
+sub print_menus;
 
-  unless (ref $navElems eq 'HASH') {
-    print "<pre>Passed ``$navElems'', not a hash ref</pre>";
-    return;
-  }
+sub print_menus {
+    # Open the list.
+    print "<ul";
 
-  ## We want the menus to appear in the order in which they were
-  ## defined to appear rather than in alphabetical order by key
-  ## (directory name), as that key may or may not correspond to the
-  ## ordering of the page titles or to any specific ordering that
-  ## the site maintainers might desire.
-
-  ## Ideally, we would keep the order the same as the order defined
-  ## by appearance in the navigation source files.  In the meantime,
-  ## as a bit of a hack, we specify an Order field in the navigation
-  ## files, and sort on that field here.
-  my @order = sort {
-    $navElems->{$a}{Order} <=> $navElems->{$b}{Order}
-      or $navElems->{$a}{Title} cmp $navElems->{$b}{Title} }
-    ( keys %$navElems );   # FIXME!  Arbitrary order!!!
-
-  if ( $debug > 5 ) {
-      print "<p><code>\@order = " . ( join ", ", @order ) . "</code></p>\n";
-  }
-
-  ### Now we use the ordered list to generate list items.
-  foreach my $key ( @order ) {
-    my $navElem = $navElems->{$key};
-
-    my $isdivider = 1 if ( $key =~ m{divider}i );
-
-    ## Calculate a full and relative URI for the item.
-    my $navpath = $navElem->{Path};
-    my $linkuri;
-    if ($navpath =~ m{http://}) {
-        # Items that already have a full URI associated with them (e.g.,
-        # links to CIS pages on their server) are basically left alone.
-        $linkuri = URI->new($navpath);
-    } else {
-        ## Clean up any doubled slashes.
-        $navpath = "/$sitebase/$navpath";
-        $navpath  =~ s|//|/|g;
-        $linkuri  = URI->new_abs($navpath, $siteroot);
-    }
-    my $reluri      = $linkuri->rel($pageuri);
-
-    ## Calculate a URL to the item's section.
-    my $linksecturi = $linkuri;
-    $linksecturi    =~ s|(http://.*/).*\.html$|$1|;
-
-    ## Chop off any html file to get a URI for the page.
-    $pageuri        =~ s|(http://.*/).*\.html$|$1|;
-
-    ## Check to see if the link we're creating contains the current page.
-    my $li_classes;
-    if ( $pageuri =~ m/$linksecturi/ and ! URI::eq($linksecturi, $siteroot)) {
-	$li_classes = "section";
+    # Add an optional id attribute.
+    if ( ( defined $args{Id} ) and ( $args{Id} ne '' ) ) {
+	print " id=\"$args{Id}\"";
+	$args{Id} = '';
     }
 
-
-
-   if ( $debug > 3 ) {
-     print "<code>\$requri:   $requri</code><br/>\n";
-     print "<code>\$navpath:     $navpath</code><br/>\n";
-     print "<code>\$sitebase:    $sitebase</code><br/>\n";
-     print "<code>\$siteroot:    $siteroot</code><br/>\n";
-     print "<code>\$pageuri:     $pageuri</code><br/>\n";
-     print "<code>\$linkuri:     $linkuri</code><br/>\n";
-     print "<code>\$reluri:      $reluri</code><br/>\n";
-     print "<code>\$pagesect:    $pagesect</code><br/>\n";
-     print "<code>\$linksecturi: $linksecturi</code><br/>\n";
-     print "<code>\$li_classes:  $li_classes</code><br/>\n";
-
-     print "<br/>";
-     print "<code>Title: $navElem->{Title}</code><br/>\n";
-     print "<code>Path:  $navElem->{Path}</code><br/>\n";
-     print "<code>Order: $navElem->{Order}</code><br/>\n";
-     print "<code>Submenu: $navElem->{Submenu}</code><br/>\n";
-   }
-
-    ### We only include top-level links that have a Submenu item.  In
-    ### practice, the only top-level link that will have a submenu item
-    ### is the one corresponding to the area of the site we're rendering
-    ### thus we'll just have a link for the top bit.
-    if ( $navElem->{Level} < $min_level and ! $navElem->{Submenu}) {
-      if ( $debug > 3 ) {
-          print"<code>Top-level link -- Skipping...</code><br/>\n";
-      }
-      next;
+    # Add optional classes.
+    if ( defined $args{Classes} ) {
+	print " class=\"$args{Classes}\"";
     }
 
-    # Actually create the list item and link.
-    print "<li";
+    # Close the opening tag.
+    print ">\n";
 
-    # Don't create links for the current page.
-    if ( URI::eq ( $pageuri, $linkuri ) ) {
-	$li_classes = "thispagelink";
+    my ( $navElems, $min_level ) = @_;
+
+    # A hash containing named navigational elements, and the minimum level
+    # that we're prepared to always print at.
+
+    unless ( ref $navElems eq 'HASH' ) {
+        print "<pre>Passed ``$navElems'', not a hash ref</pre>";
+        return;
     }
 
-    # Add any defined classes.
-    if ( $li_classes ) {
-	print " class=\"$li_classes\"";
+    ## We want the menus to appear in the order in which they were
+    ## defined to appear rather than in alphabetical order by key
+    ## (directory name), as that key may or may not correspond to the
+    ## ordering of the page titles or to any specific ordering that
+    ## the site maintainers might desire.
+
+    ## Ideally, we would keep the order the same as the order defined
+    ## by appearance in the navigation source files.  In the meantime,
+    ## as a bit of a hack, we specify an Order field in the navigation
+    ## files, and sort on that field here.
+    my @order = sort {
+               $navElems->{$a}{Order} <=> $navElems->{$b}{Order}
+            or $navElems->{$a}{Title} cmp $navElems->{$b}{Title}
+    } ( keys %$navElems );    # FIXME!  Arbitrary order!!!
+
+    if ( $debug > 5 ) {
+        print "<p><code>\@order = " . ( join ", ", @order ) . "</code></p>\n";
     }
 
-    # Close the opening <li> tag.
-    print ">";
+    ### Now we use the ordered list to generate list items.
+    foreach my $key (@order) {
+	my ($isdivider, $iscomponent);
+        my $navElem = $navElems->{$key};
+        $isdivider = 1 if ( $key =~ m{divider}i );
+        $iscomponent = 1 if ( defined $navElem->{Component} );
+        my ( $navpath, $linkuri, $linksecturi, $reluri, @li_classes, @span_classes );
 
-    ## Create links for menu items that don't point to the current
-    ## page.
-    unless ( ( URI::eq ( $pageuri, $linkuri ) ) or ( $isdivider ) ) {
-      print "<a href=\"$reluri\">";
+	if ( defined $navElem->{Classes} ) {
+	    push @li_classes, "menu-item";
+	    push @li_classes, (split " ", $navElem->{Classes});
+	}
+
+        unless ($iscomponent) {
+            ## Calculate a full and relative URI for the item.
+            $navpath = $navElem->{Path};
+            if ( $navpath =~ m{http://} ) {
+
+              # Items that already have a full URI associated with them (e.g.,
+              # links to CIS pages on their server) are basically left alone.
+                $linkuri = URI->new($navpath);
+            }
+            else {
+                ## Clean up any doubled slashes.
+                $navpath = "/$sitebase/$navpath";
+                $navpath =~ s|//|/|g;
+                $linkuri = URI->new_abs( $navpath, $siteroot );
+            }
+            $reluri = $linkuri->rel($pageuri);
+
+            ## Calculate a URL to the item's section.
+            $linksecturi = $linkuri;
+            $linksecturi =~ s|(http://.*/).*\.html$|$1|;
+
+            ## Chop off any html file to get a URI for the page.
+            $pageuri =~ s|(http://.*/).*\.html$|$1|;
+
+            ## Check to see if the link we're creating contains the current page.
+            if ( $pageuri =~ m/$linksecturi/
+                and !URI::eq( $linksecturi, $siteroot ) )
+            {
+                push @li_classes, "section";
+            }
+        }
+
+        if ( $debug > 3 ) {
+            if ( defined $requri ) {
+                print "<code>\$requri:   $requri</code><br/>\n";
+            }
+            if ( defined $navpath ) {
+                print "<code>\$navpath:     $navpath</code><br/>\n";
+            }
+            if ( defined $sitebase ) {
+                print "<code>\$sitebase:    $sitebase</code><br/>\n";
+            }
+            if ( defined $siteroot ) {
+                print "<code>\$siteroot:    $siteroot</code><br/>\n";
+            }
+            if ( defined $pageuri ) {
+                print "<code>\$pageuri:     $pageuri</code><br/>\n";
+            }
+            if ( defined $linkuri ) {
+                print "<code>\$linkuri:     $linkuri</code><br/>\n";
+            }
+            if ( defined $reluri ) {
+                print "<code>\$reluri:      $reluri</code><br/>\n";
+            }
+            if ( defined $pagesect ) {
+                print "<code>\$pagesect:    $pagesect</code><br/>\n";
+            }
+            if ( defined $linksecturi ) {
+                print "<code>\$linksecturi: $linksecturi</code><br/>\n";
+            }
+            if ( @li_classes ) {
+                print "<code>\@li_classes:  " . ( join " ", @li_classes ) . "</code><br/>\n";
+            }
+            print "<br/>";
+            if ( defined $navElem->{Title} ) {
+                print "<code>Title: $navElem->{Title}</code><br/>\n";
+            }
+            if ( defined $navElem->{Id} ) {
+                print "<code>id: $navElem->{Id}</code><br/>\n";
+            }
+            if ( defined $navElem->{Path} ) {
+                print "<code>Path:  $navElem->{Path}</code><br/>\n";
+            }
+            if ( defined $navElem->{Component} ) {
+                print "<code>Component:  $navElem->{Component}</code><br/>\n";
+            }
+            if ( defined $iscomponent ) {
+                print "<code>IsComponent:  $iscomponent</code><br/>\n";
+            }
+            if ( defined $navElem->{Order} ) {
+                print "<code>Order: $navElem->{Order}</code><br/>\n";
+            }
+            if ( defined $navElem->{Submenu} ) {
+                print "<code>Submenu: $navElem->{Submenu}</code><br/>\n";
+            }
+        }
+
+        ### We only include top-level links that have a Submenu item.  In
+        ### practice, the only top-level link that will have a submenu item
+        ### is the one corresponding to the area of the site we're rendering
+        ### thus we'll just have a link for the top bit.
+        if ( $navElem->{Level} < $min_level and !$navElem->{Submenu} ) {
+            if ( $debug > 3 ) {
+                print "<code>Top-level link -- Skipping...</code><br/>\n";
+            }
+            next;
+        }
+
+        # Actually create the list item and link.
+        print "<li";
+
+	# Add provided id.
+	if ( defined $navElem->{Id} ) {
+	    print " id=\"" . $navElem->{Id} . "\"";
+	}
+
+        # Add thispagelink class if the link is to this page.
+        if ( URI::eq( $pageuri, $linkuri ) ) {
+            push @span_classes, "thispagelink";
+            push @li_classes, "thispagelink";
+        }
+
+        # Add any provided classes.
+        if (@li_classes) {
+	    print " class=\"" . ( join " ", @li_classes ) . "\"";
+        }
+
+        # Close the opening <li> tag.
+        print ">";
+
+        ## Create links for menu items that don't point to the current
+        ## page.
+        if ($isdivider) {
+            print "<hr class=\"navdivider\"/>";
+        }
+        elsif ($iscomponent) {
+            print $m->scomp("$navElem->{Component}");
+        }
+	elsif (! URI::eq( $pageuri, $linkuri ) ) {
+            print "<a href=\"$reluri\">";
+            print "$navElem->{Title}";
+            ## Close the link, if we're creating one.
+            print "</a>";
+        }
+        else {
+            # print "<span class=\"" . ( join " ", @span_classes ) . "\">$navElem->{Title}</span>";
+            print "$navElem->{Title}";
+	}
+
+	## Before we add the closing </li> tag, check for the existence
+	## of a submenu; if there is one, recursively call this routine
+	## to fill in that information.
+	my $submenu = $navElem->{Submenu};
+	if ( defined $submenu ) {
+	    print "\n";
+	    print_menus $submenu, $min_level;
+	}
+
+	## Now close the </li> tag.
+	print "</li>\n";
     }
-
-    # Print the content of the list item/link.
-    if ( $isdivider )  {
-	print "<hr class=\"navdivider\"/>";
-    } else {
-	print "$navElem->{Title}";
-    }
-
-    ## Close the link, if we're creating one.
-    unless ( ( URI::eq ( $pageuri, $linkuri ) ) or ( $isdivider ) ) {
-	print "</a>";
-    }
-
-    ## Before we add the closing </li> tag, check for the existence
-    ## of a submenu; if there is one, recursively call this routine
-    ## to fill in that information.
-    my $submenu = $navElem->{Submenu};
-    if ( defined $submenu ) {
-      print "\n";
-      print_menus $submenu, $min_level;
-    }
-
-    ## Now close the </li> tag.
-    print "</li>\n";
-  }
-  print "</ul>\n";
+    print "</ul>\n";
 }
-
-
 
 </%init>
