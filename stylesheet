@@ -34,7 +34,11 @@ as in
 component call, the component will specify screen in its output.)
 
 Stylesheets are assumed to be stored in the /stylesheets directory for
-the site.
+the site, however, by setting cssdir, as in
+
+   <& /stylesheet, 'main', cssdir=>'css' &>
+
+you can change the location for this single stylesheet.
 
 </%doc>
 <link rel="stylesheet" type="text/css" media="<% $media %>" href="<% $cssuri %>" />\
@@ -57,7 +61,8 @@ the site.
 my $stylesheet =  shift @_;
 my %args       = @_;
 my $media      = "screen";
-$media         = $args{Media} if ( $args{Media} );
+my $cssdir     = "stylesheets";
+$cssdir        = $args{cssdir} if ( $args{cssdir} );
    
 
 our ( $siteroot, $pagepath, $pageuri, $hostname );
@@ -83,9 +88,9 @@ my $debug = 0;
 ##### my $pageuri = URI->new_abs($pagepath, $siteroot);
 
 
-my $csspath    =  'stylesheets/' . $stylesheet . '.css';
+my $csspath    =  $cssdir . '/' . $stylesheet . '.css';
 my $cssabsuri  =  URI->new_abs($csspath, $siteroot);
-#my $cssuri     =  $cssabsuri->rel($pageuri);
+# my $cssuri   =  $cssabsuri->rel($pageuri);
 my $cssuri     =  $cssabsuri;
 
 </%init>
