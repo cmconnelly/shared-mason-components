@@ -1,7 +1,7 @@
 <%doc>
 
 DTD HTML::Mason component
-Copyright (C) 2000 - 2003 Claire Connelly
+Copyright (C) 2000 - 2014 Claire Connelly
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -70,6 +70,9 @@ xhtml1.1 -- XHTML 1.1
    -//W3C//DTD XHTML 1.1//EN
    <http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd>
 
+HTML 5
+   <html>
+
 Theoretically, you should be able to specify a particular DTD for a
 single page by adding the line
 
@@ -96,6 +99,8 @@ $Id$
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 % } elsif ( $DTD eq "4.01frame" ) {
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd">
+% } elsif ( $DTD eq "5" ) {
+<!DOCTYPE html>
 % } elsif ( $DTD eq "xhtml1.0" ) {
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
