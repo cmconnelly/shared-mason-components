@@ -74,12 +74,17 @@ component's documentation for the details.
 %### Output
 %### -----------------------------------------------------------------
 <% $result %>
-%#<pre>
-%#imgargs = <% $imgargs %>
-%#imagecode = <% $imagecode %>
-%#</pre>
+% if ( $debug ) {
+<pre>
+% my $imgargs = join ", ", @imgargs;
+imgargs   = <% $imgargs %>
+imagecode = <% $imagecode %>
+result    = <% $result %>
+</pre>
+% }
 %### -----------------------------------------------------------------
 <%init>
+my $debug = 0;
 my $result;
 my $morestyle;
 
