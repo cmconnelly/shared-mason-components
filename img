@@ -29,9 +29,15 @@ In its most basic form, the component is called as
 
    <& /img, 'imagename' &>
 
-which generates a basic <img/> tag containing a src and alt
-attribute.  These values are based on the values in the images.yaml
-database, but can be overridden in the component call.
+which generates a basic <img/> tag containing a src and alt attribute,
+based on the values in the images.yaml database or provided in the
+component call (see below).
+
+The tag will also include height and width attributes retrieved from
+the image's metadata or specified in the component call (see below).
+
+You can suppress the addition of height and width attributes by
+specifying 'Nosize' as part of the component call.
 
 
 Attributes
@@ -133,6 +139,13 @@ on a top-level page would produce an <img> tag such as
 Notice the height and width values, which are obtained by examining
 the image file if they were not supplied in the component call
 (using Image::Size).
+
+   <& /img, 'foo', Nosize=>'1' &>
+
+would produce the same <img> tag, but without the height or width attributes:
+
+   <img src="images/foo.png" alt="foos in love" />
+
 
 The path to the image is generated based on the location of the
 calling page and the location of the directory (using the URI
@@ -338,15 +351,23 @@ if ( defined $imagedb_entry ) {
     # directories.
     $imagepath = "$imagedir/" . $imagefile;
 
-    ## Obtain the width and height of the image and populate the
-    ## %image hash with that information.
-    my ( $width, $height ) = ( Image::Size::imgsize($imagepath) );
+    unless ( $image{Nosize} ) {
+	## Obtain the width and height of the image and populate the
+	## %image hash with that information.
+	my ( $iwidth, $iheight ) = ( Image::Size::imgsize($imagepath) );
 
-    ## Now add these to our %image hash unless we were given a value
-    ## when called.
-    $image{Width}          = $width  unless defined $image{Width};
-    $image{Height}         = $height unless defined $image{Height};
+	# print "<p><code>\$iwidth: $iwidth, \$iheight: $iheight</code></p>\n";
+	# print "<p><code>\$image{Width}: $image{Width}, \$image{Height}: $image{Height}</code></p>\n";
 
+	## Now add these to our %image hash unless we were given a value
+	## when called,
+	$image{Width}          = $iwidth  unless ( $image{Width} > 0 );
+	$image{Height}         = $iheight unless ( $image{Height} > 0 );
+	$image{Style} .= " border: 2px solid purple;";
+	# print "<p><code>\$image{Width}: $image{Width}, \$image{Height}: $image{Height}</code></p>\n";
+    }
+
+    
     ## Supply a default value for the alt attribute.  We should
     ## probably throw an error here instead, as the alt attribute is
     ## required by the current standards.
@@ -382,15 +403,17 @@ if ( defined $imagedb_entry ) {
 
 ### Define a list of known and supported attributes.
 
-## We are not including two required attributes for the img element,
-## src and alt, as we handle those specifically.
+## We are not including the two required attributes for the img
+## element, src and alt, or the height and width, as we handle those
+## specifically.
+
 my @ATTRIBUTES = qw(
-    Align    Id          Onkeypress   Onmouseup
-    Border   Ismap       Onkeyup      Style
-    Class    Lang        Onmousedown  Title
-    Dir      Onclick     Onmousemove  Usemap
-    Height   Ondblclick  Onmouseout   Vspace
-    Hspace   Onkeydown   Onmouseover  Width
+    Align       Ismap        Onkeyup	    Style
+    Border	Lang         Onmousedown    Title
+    Class	Onclick      Onmousemove    Usemap
+    Dir		Ondblclick   Onmouseout	    Vspace
+    Hspace	Onkeydown    Onmouseover
+    Id		Onkeypress   Onmouseup
 );
 
 
@@ -405,6 +428,10 @@ foreach my $attribute ( @ATTRIBUTES ) {
     if ( defined $image{$attribute} ) {
         $image_tag .= " \l$attribute=\"$image{$attribute}\"";
     }
+}
+
+unless ( $image{Nosize} ) {
+    $image_tag .= " height=\"$image{Height}\" width=\"$image{Width}\"";
 }
 
 ## The alt attribute is required.

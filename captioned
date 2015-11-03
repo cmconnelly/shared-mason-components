@@ -68,7 +68,6 @@ Additional Attributes
 Additional attributes will be passed to the img component -- see that
 component's documentation for the details.
 
-'
 </%doc>
 %### -----------------------------------------------------------------
 %### Output
@@ -143,7 +142,7 @@ $result .= "\"";
 
 # Set the width of the paragraph to the width of the image.
 $result .= " style=\"width: ";
-$result .= get_imagewidth . "px";
+$result .= get_imagewidth;
 $result .= ";";
 # add additional styles
 if ( $morestyle ) {
