@@ -67,8 +67,6 @@ Additional Attributes
 
 Additional attributes will be passed to the img component -- see that
 component's documentation for the details.
-
-'
 </%doc>
 %### -----------------------------------------------------------------
 %### Output

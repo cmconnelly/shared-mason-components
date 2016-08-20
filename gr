@@ -194,15 +194,15 @@ if ( ! defined $lastdirpath
     print "\@dirs = (", join(", ", @dirs), ")\n<br />" if ( $debug >= 1 );
 
     while (@dirs) {
-	my $path = join('/', @dirs );
-	print "\$path is $path\n" if ( $debug >= 1 );
-	my $glosstest = "$path/$GLOSSNAME";
-	print "\n<br/> checking '$glosstest'" if ( $debug >= 2 );
-	if ( $m->comp_exists($glosstest) ) {
-	    print " -- found!" if ( $debug >= 2 );
-	    push ( @glossaries, $glosstest );
-	}
-	pop @dirs;
+        my $path = join('/', @dirs );
+        print "\$path is $path\n" if ( $debug >= 1 );
+        my $glosstest = "$path/$GLOSSNAME";
+        print "\n<br/> checking '$glosstest'" if ( $debug >= 2 );
+        if ( $m->comp_exists($glosstest) ) {
+            print " -- found!" if ( $debug >= 2 );
+            push ( @glossaries, $glosstest );
+        }
+        pop @dirs;
     }
 
     print "\n<br />\n\@glossaries = (", join(", ", @glossaries), ")<br />\n" if ( $debug >= 1 );
@@ -221,14 +221,14 @@ if ( ! defined $lastdirpath
 #    my @glossary;
 
     while ( @glossaries ) {
-	my $glossfile = pop @glossaries;
-	print "<br />loading $glossfile<br />\n" if ( $debug >= 1 );
+        my $glossfile = pop @glossaries;
+        print "<br />loading $glossfile<br />\n" if ( $debug >= 1 );
 
-	# Slurp in the contents of the glossary file as a string.
-	my $data = $m->scomp($glossfile);
+        # Slurp in the contents of the glossary file as a string.
+        my $data = $m->scomp($glossfile);
 
-	# Skip this one if the file is empty.
-	next if ( $data =~ m/^\s*\z/ );
+        # Skip this one if the file is empty.
+        next if ( $data =~ m/^\s*\z/ );
 
         # Construct a hash from the data in the string.
 
@@ -275,18 +275,18 @@ my @ATTRIBUTES = qw(
 if ( defined $glossary_entry ) {
     %link = ( %link, %$glossary_entry, %remainingargs);
     if ( $link{URL} ne "" ) { # There's a URL
-	## Opening <a> tag.
-	$result      .= '<a href="';
-	$workinglink  = $link{URL};
-	if ( $workinglink =~ m#^/# ) {
-	    ## This is a local (intersite) link, so we want it relative
-	    $workinglink =~ s|^/||;
-	    my $fullink = $siteroot . $workinglink;
-	    $linkuri    = URI->new_abs($fullink, $siteroot);
-	    $linkrel    = $linkuri->rel($pageuri);
-	    ## Replace the URL field with the relative link.
-	    $link{URL}  = $linkrel;
-	}
+        ## Opening <a> tag.
+        $result      .= '<a href="';
+        $workinglink  = $link{URL};
+        if ( $workinglink =~ m#^/# ) {
+            ## This is a local (intersite) link, so we want it relative
+            $workinglink =~ s|^/||;
+            my $fullink = $siteroot . $workinglink;
+            $linkuri    = URI->new_abs($fullink, $siteroot);
+            $linkrel    = $linkuri->rel($pageuri);
+            ## Replace the URL field with the relative link.
+            $link{URL}  = $linkrel;
+        }
         $result .= "$link{URL}\"";
 
 	## Add supplied attributes from approved attribute list.  Note that
@@ -302,15 +302,15 @@ if ( defined $glossary_entry ) {
 
     ## Tag enclosure(s).
     if ( $linktext ne "" ) {
-	## Use supplied linktext if available.
-	$link{Text} = $linktext;
+        ## Use supplied linktext if available.
+        $link{Text} = $linktext;
     }
 
     ## If we have an Explanation field and it's not suppressed, add
     ## a set of <abbr></abbr> tags around the content of the
     ## $link{Text} field.
     if ( ( $link{Explanation} ) and ( $expflag ) ) {
-	$link{Text} = '<abbr title="' . $link{Explanation} . '">' . $link{Text} . '</abbr>';
+        $link{Text} = '<abbr title="' . $link{Explanation} . '">' . $link{Text} . '</abbr>';
     }
 
     ## Output the link text.
@@ -318,8 +318,8 @@ if ( defined $glossary_entry ) {
 
     ## Close <a> tag, if there is one.
     if ( $link{URL} ne "" ) {
-	## Closing tag.
-	$result .= '</a>';
+        ## Closing tag.
+        $result .= '</a>';
     }
 } else {
     ## Requested glossary entry doesn't exist in the database.
