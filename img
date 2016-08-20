@@ -305,8 +305,8 @@ print "This request at $requesttime <br />\n" if $debug >= 1;
 	# Skip this one if the file is empty.
 	next if ( $imagedata =~ m/^\s*\z/ );
 
-        # Construct a hash from the data in the string.
-        $imagedb = YAML::Load ( $imagedata );
+	# Construct a hash from the data in the string.
+	$imagedb = YAML::Load ( $imagedata );
     }
 # cache code still commented while testing
 # } else {
@@ -365,7 +365,7 @@ if ( defined $imagedb_entry ) {
 	# print "<p><code>\$image{Width}: $image{Width}, \$image{Height}: $image{Height}</code></p>\n";
     }
 
-    
+
     ## Supply a default value for the alt attribute.  We should
     ## probably throw an error here instead, as the alt attribute is
     ## required by the current standards.
@@ -424,7 +424,7 @@ my $image_tag = "<img src=\"$image{Filename}\"";
 ## any arguments that are not in the list are dropped silently.
 foreach my $attribute ( @ATTRIBUTES ) {
     if ( defined $image{$attribute} ) {
-        $image_tag .= " \l$attribute=\"$image{$attribute}\"";
+	$image_tag .= " \l$attribute=\"$image{$attribute}\"";
     }
 }
 
