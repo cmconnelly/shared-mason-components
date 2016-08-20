@@ -130,7 +130,9 @@ our ($webhostname, $pageuri, $siteroot);
 
 ### Now, based on the arguments that we were provided, we can define
 ### $glossentry and $linktext.
-my ($glossentry, $linktext) = @_;
+my $glossentry = shift;
+my $linktext   = shift;
+my %remainingargs = @_;
 
 my $expflag = 1;
 
@@ -256,9 +258,22 @@ my $linkrel;
 my $workinglink;
 my $result;
 
+### Define a list of known and supported attributes.
+
+## We are not including two required attributes for the img element,
+## src and alt, as we handle those specifically.
+my @ATTRIBUTES = qw(
+   Class     Ondblclick   Onmousedown   Onmouseup 
+   Id        Onkeydown    Onmousemove   Style     
+   Lang      Onkeypress   Onmouseout 
+   Onclick   Onkeyup      Onmouseover
+);
+
+
+### Construct the image element.
 
 if ( defined $glossary_entry ) {
-    %link = ( %link, %$glossary_entry);
+    %link = ( %link, %$glossary_entry, %remainingargs);
     if ( $link{URL} ne "" ) { # There's a URL
 	## Opening <a> tag.
 	$result      .= '<a href="';
@@ -272,9 +287,18 @@ if ( defined $glossary_entry ) {
 	    ## Replace the URL field with the relative link.
 	    $link{URL}  = $linkrel;
 	}
-	$result .= $link{URL};
-	$result .= '">';
-    }				# End of opening <a> tag.
+        $result .= "$link{URL}\"";
+
+	## Add supplied attributes from approved attribute list.  Note that
+	## any arguments that are not in the list are dropped silently.
+	foreach my $attribute ( @ATTRIBUTES ) {
+	    if ( defined $link{$attribute} ) {
+		$result .= " \l$attribute=\"$link{$attribute}\"";
+	    }
+	}
+
+	$result .= '>';	# End of opening <a> tag.
+    }
 
     ## Tag enclosure(s).
     if ( $linktext ne "" ) {
