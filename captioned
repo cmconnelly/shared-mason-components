@@ -147,14 +147,18 @@ $result .= "<p class=\"caption";
 $result .= "\"";
 
 # Set the width of the paragraph to the width of the image.
-$result .= " style=\"width: ";
-$result .= get_imagewidth . "px";
-$result .= ";";
-# add additional styles
-if ( $morestyle ) {
-    $result .= " $morestyle";
-}
+my $width = get_imagewidth;
+if ( $width or $morestyle ) {
+    $result .= " style=\"";
+    if ( $width ) {
+        $result .= "width: $width" . "px;";
+    }
+    # add additional styles
+    if ( $morestyle ) {
+        $result .= " $morestyle";
+    }
 $result .= "\"";
+}
 $result .= ">";
 # Insert the image tag.
 $result .= "$imagecode";
