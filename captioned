@@ -101,10 +101,15 @@ $caption =~ s{\n}{ }g;
 ## Process remaining arguments.
 our %args = (@arguments);
 
+if ( defined $args{Style} ) {
+   $morestyle .= $args{Style};
+}
+
+
 # Cherry pick a Left attribute to set style to force float to
 # the left; Right to the right.
 if ( defined $args{Float} ) {
-    $morestyle = "float: ";
+    $morestyle .= " float: ";
     if ( $args{Float} =~ m{center}i ) {
 	$morestyle .= "none; margin: 0 auto;";
     } else {
