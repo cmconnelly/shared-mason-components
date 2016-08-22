@@ -60,9 +60,9 @@ you can change the location for this single stylesheet.
 <%init>
 my $stylesheet =  shift @_;
 my %args       = @_;
-my $media      = "screen";
-my $cssdir     = "stylesheets";
-$cssdir        = $args{cssdir} if ( $args{cssdir} );
+
+my $media      = $args{Media}  ? $args{Media}  : "screen";
+my $cssdir     = $args{cssdir} ? $args{cssdir} : "stylesheets";
    
 
 our ( $siteroot, $pagepath, $pageuri, $hostname );
