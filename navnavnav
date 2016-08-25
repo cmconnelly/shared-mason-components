@@ -123,25 +123,21 @@ use Data::Dumper;
 our $debug = 0;
 
 ### Grab any arguments we may have been passed for later processing.
-my ( $main_nav, $is_main );
+my $is_main = 0;
 our %args = @_;
 
-if ( defined $args{Main} ) {
-    $main_nav = $args{Main};
-}
-
-if ($main_nav eq "main" ) {
+if ( $args{Main} ) {
     $is_main = 1;
 }
 
 ### Don't print nav elements beneath this level unless they are part of
 ### the hierarchy for this page.
-my $nav_level = $main_nav ? 1 : 2;
+my $nav_level = $is_main ? 1 : 2;
 
 ### Are we rendering the main_nav part?
 
-if ($debug) {
-    print "<p><code>\$main_nav was $main_nav</code></p>\n";
+if ( ( $debug ) && ( $is_main ) ) {
+    print "<p><code>\$is_main is set (arg was $args{Main})</code></p>\n";
 }
 
 ### Grab some information about our working environment.
