@@ -232,7 +232,7 @@ if ( ! defined $lastdirpath
 
         # Construct a hash from the data in the string.
 
-        my $glosshashref = YAML::Load ( $data );
+        my $glosshashref = YAML::XS::Load ( $data );
 
         %glossary = ( %glossary, %{ $glosshashref } );
 

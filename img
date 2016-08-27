@@ -293,7 +293,7 @@ print "This request at $requesttime <br />\n" if $debug >= 1;
 	next if ( $imagedata =~ m/^\s*\z/ );
 
         # Construct a hash from the data in the string.
-        $imagedb = YAML::Load ( $imagedata );
+        $imagedb = YAML::XS::Load ( $imagedata );
     }
 # cache code still commented while testing
 # } else {

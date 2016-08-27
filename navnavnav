@@ -214,7 +214,7 @@ while (@dirs) {
 
     ## Parse the file contents into a data structure using the YAML
     ## module.
-    my $thislevel = YAML::Load($navdata);
+    my $thislevel = YAML::XS::Load($navdata);
     unless ( defined $thislevel ) {
         warn "Couldn't load YAML data for $navfile";
         next;

@@ -127,7 +127,7 @@ my $DEPT_COURSEINFO_FILE = "/cd-defaults.yaml";
 ## Suck the data into a string.
 if ( $m->comp_exists($DEPT_COURSEINFO_FILE) ) {
     my $deptcourseinfo = $m->scomp($DEPT_COURSEINFO_FILE);
-    $dept_info = YAML::Load( $deptcourseinfo );
+    $dept_info = YAML::XS::Load( $deptcourseinfo );
 } else {
     ## Die.  No data, we can't do anything useful.
     die "Departmental course datafile $DEPT_COURSEINFO_FILE not found";

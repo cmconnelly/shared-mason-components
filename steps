@@ -184,7 +184,7 @@ my $steporderdir  = shift @stepinfo;
 my $steporderfile = $steporderdir . "/" . $STEP_ORDER_FILENAME;
 
 ### Slurp in the contents of the glossary file as a string.
-my $steplistref = YAML::Load ( $m->scomp($steporderfile) );
+my $steplistref = YAML::XS::Load ( $m->scomp($steporderfile) );
 my @steplist    = @{ $steplistref };
 
 my $curstep =  $CALLINGDIR;

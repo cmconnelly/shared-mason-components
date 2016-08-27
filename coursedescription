@@ -83,7 +83,7 @@ if ( $reqfield && ! grep ( m/$reqfield/, @fields ) ) {
 my $coursedata;
 if ( $m->comp_exists($COURSE_DESCRIPTIONS_FILE) ) {
     my $data = ( $m->scomp($COURSE_DESCRIPTIONS_FILE) );
-    $coursedata = YAML::Load($data);
+    $coursedata = YAML::XS::Load($data);
 }
 
 ### Hashref to shorten referrals.
