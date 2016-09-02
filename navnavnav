@@ -332,6 +332,7 @@ sub print_menus {
     }
 
     ### Now we use the ordered list to generate list items.
+  LISTITEM:
     foreach my $key (@order) {
 	my ($isdivider, $iscomponent);
         my $navElem = $navElems->{$key};
@@ -440,13 +441,14 @@ sub print_menus {
         ### practice, the only top-level link that will have a submenu item
         ### is the one corresponding to the area of the site we're rendering
         ### thus we'll just have a link for the top bit.
-        if ( $navElem->{Level} < $min_level and !$navElem->{Submenu} ) {
+	
+	if ( $navElem->{Level} < $min_level and ! $navElem->{Submenu}  ) {
             if ( $debug > 3 ) {
                 print "<code>Top-level link -- Skipping...</code><br/>\n";
             }
-            next;
+            next LISTITEM;
         }
-
+	
         # Actually create the list item and link.
         print "<li";
 
@@ -478,10 +480,12 @@ sub print_menus {
             print $m->scomp("$navElem->{Component}");
         }
 	elsif (! URI::eq( $pageuri, $linkuri ) ) {
-            print "<a href=\"$reluri\">";
-            print "$navElem->{Title}";
-            ## Close the link, if we're creating one.
-            print "</a>";
+	    if ( $navElem->{Title} ) {
+		print "<a href=\"$reluri\">";
+		print "$navElem->{Title}";
+		## Close the link, if we're creating one.
+		print "</a>";
+	    }
         }
         else {
             # print "<span class=\"" . ( join " ", @span_classes ) . "\">$navElem->{Title}</span>";
