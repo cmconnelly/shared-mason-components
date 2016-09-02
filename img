@@ -354,9 +354,9 @@ if ( defined $imagedb_entry ) {
 
     ## Populate the title attribute using the value of the alt
     ## attribute if no title was supplied.
-    if ( ! defined $image{Title} ) {
-	$image{Title} = $image{Alt};
-    }
+    # if ( ! defined $image{Title} ) {
+    # 	$image{Title} = $image{Alt};
+    # }
 
     ## Populate the URL field in the %image hash.
     ## If both Url and Gloss are defined, throw an error.
