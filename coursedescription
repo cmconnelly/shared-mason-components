@@ -1,7 +1,4 @@
 <%doc>
-
-$Id$
-
 Copyright (C) 2007-2016 Claire Connelly and the Department of
                    Mathematics, Harvey Mudd College
 
@@ -44,7 +41,7 @@ my $debug = 0;
 our ( $webhostname, $pageuri, $siteroot );
 
 ### Path to the course descriptions database file.
-my $COURSE_DESCRIPTIONS_FILE = "/program/courses/course-descriptions";
+my $COURSE_DESCRIPTIONS_FILE = "/program/courses/course-descriptions.yaml";
 
 ### Parse arguments.
 my $class    = shift;
