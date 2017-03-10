@@ -74,6 +74,7 @@ my $curpath = $m->request_comp->dir_path;
 my @dirs = split ('/', $curpath );
 push @dirs, '' unless @dirs;
 
+print "\$curpath       = $curpath<br/>\n" if ( $debug );
 
 my $output = join " ", @dirs;
 
@@ -86,17 +87,17 @@ while ( @dirs  ) {
 
   my $class;
   my $title;
-  my $path = ( join "/", @dirs );
+  my $path = ( join "/", @dirs ) . "/";
   print "\$path = $path<br/>\n" if ( $debug > 0 );
-  if ( $path eq "" ) {
+  if ( $path eq "/" ) {
     # If we're at the top, create a link to the home page for the site.
     $title = "Home";
     $class = " class=\"first\"";
     $path  = "/";
   } else {
     # Otherwise, we look for a metadata file or index.html.
-    my $crumbmetapath = $path . "/metadata";
-    my $crumbpagepath = $path . "/index.html";
+    my $crumbmetapath = $path . "metadata";
+    my $crumbpagepath = $path . "index.html";
 
     if ( $m->comp_exists($crumbmetapath) ) {
       # If a metadata file exists, parse it and pull out the section 
@@ -133,10 +134,10 @@ while ( @dirs  ) {
 }
 
 ### Actually output the breadcrumb list.
-print "<ul class=\"breadcrumbs\">\n";
+print "<nav class=\"breadcrumbs\">\n";
 
 while ( @crumbtrail ) {
   print ( pop @crumbtrail );
 }
-print "</ul>\n";
+print "</nav>\n";
 </%init>
