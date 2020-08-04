@@ -9,10 +9,13 @@ Many of these components were originally written to provide
 similar functionality to macros in [Userland Frontier](http://scripting.com/frontier/beginning/whatFrontierIs.html) before
 it became a commercial product.
 
+Most components rely on data files in YAML format.
+
 Most continuing development has taken place as part of maintaining
 and improving the math department website, and we have added
 components for handling course links, pulling out course
-description information, and so on.
+description information, and so on.  Further development of the 
+HMC-related components is unlikely, as I have left their employ.
 
 Note that some of these components are being modified to make them
 behave better in an HTML5 world.
